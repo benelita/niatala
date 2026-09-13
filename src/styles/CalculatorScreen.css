@@ -1,0 +1,137 @@
+.calculator-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: var(--bg-secondary);
+  padding: 2rem;
+}
+
+.calculator-container {
+  background: var(--bg);
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 400px;
+}
+
+.calculator-title {
+  text-align: center;
+  margin: 0 0 2rem 0;
+  font-size: 1.75rem;
+  color: var(--text);
+}
+
+.display {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  text-align: right;
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 1.5rem;
+  min-height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  word-wrap: break-word;
+  word-break: break-all;
+}
+
+.buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+}
+
+.btn {
+  padding: 1rem;
+  background: var(--bg-secondary);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--accent);
+}
+
+.btn:active {
+  transform: scale(0.95);
+}
+
+.btn-operation {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.btn-operation:hover {
+  background: var(--accent-dark);
+  border-color: var(--accent-dark);
+}
+
+.btn-clear,
+.btn-backspace {
+  background: var(--danger);
+  color: white;
+  border-color: var(--danger);
+}
+
+.btn-clear:hover,
+.btn-backspace:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.btn-equals {
+  background: var(--success);
+  color: white;
+  border-color: var(--success);
+  grid-column: span 2;
+  font-size: 1.5rem;
+}
+
+.btn-equals:hover {
+  background: var(--success-hover);
+  border-color: var(--success-hover);
+}
+
+.btn-zero {
+  grid-column: span 2;
+}
+
+@media (max-width: 600px) {
+  .calculator-container {
+    padding: 1.5rem;
+    max-width: 90%;
+  }
+
+  .calculator-title {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .btn {
+    padding: 0.875rem;
+    font-size: 1.125rem;
+  }
+
+  .display {
+    font-size: 2rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .buttons {
+    gap: 0.5rem;
+  }
+}

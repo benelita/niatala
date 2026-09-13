@@ -1,0 +1,17 @@
+export const Icons = {
+  cashier: '💳',
+  sales: '📋',
+  products: '📦',
+  clients: '👥',
+  credits: '📖',
+  dashboard: '📊',
+  calculator: '🔢',
+  scanner: '📱',
+  chevronLeft: '❮',
+  chevronRight: '❯',
+  close: '✕',
+  minus: '−',
+  plus: '+',
+  delete: '🗑️',
+  logout: '🚪',
+}

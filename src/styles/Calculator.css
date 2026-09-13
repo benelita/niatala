@@ -1,0 +1,154 @@
+.calculator-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.calculator-modal {
+  background: var(--bg);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-lg);
+  width: 90%;
+  max-width: 320px;
+  overflow: hidden;
+}
+
+.calculator-header {
+  background: var(--primary);
+  color: white;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.calculator-header h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calculator {
+  padding: 1rem;
+}
+
+.display {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  text-align: right;
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 1rem;
+  min-height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  word-wrap: break-word;
+  word-break: break-all;
+}
+
+.buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.btn {
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--accent);
+}
+
+.btn:active {
+  transform: scale(0.95);
+}
+
+.btn-operation {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.btn-operation:hover {
+  background: var(--accent-dark);
+  border-color: var(--accent-dark);
+}
+
+.btn-clear,
+.btn-backspace {
+  background: var(--danger);
+  color: white;
+  border-color: var(--danger);
+}
+
+.btn-clear:hover,
+.btn-backspace:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.btn-equals {
+  background: var(--success);
+  color: white;
+  border-color: var(--success);
+  grid-column: span 2;
+  font-size: 1.5rem;
+}
+
+.btn-equals:hover {
+  background: var(--success-hover);
+  border-color: var(--success-hover);
+}
+
+.btn-zero {
+  grid-column: span 2;
+}
+
+@media (max-width: 400px) {
+  .calculator-modal {
+    max-width: 95%;
+  }
+
+  .btn {
+    font-size: 1rem;
+    padding: 0.625rem;
+  }
+
+  .display {
+    font-size: 1.5rem;
+  }
+}

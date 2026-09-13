@@ -1,0 +1,17 @@
+.payment-modal-content.orange .modal-header {
+  background: linear-gradient(135deg, #ff6600 0%, #ff8533 100%);
+}
+
+.payment-modal-content.orange .btn-primary.orange-btn {
+  background: linear-gradient(135deg, #ff6600 0%, #ff8533 100%);
+}
+
+.payment-modal-content.orange .btn-primary.orange-btn:hover {
+  opacity: 0.9;
+}
+
+.payment-modal-content.orange .info-text.orange-info {
+  background: #fed7aa;
+  color: #9a3412;
+  border-color: #fdba74;
+}
