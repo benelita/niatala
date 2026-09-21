@@ -282,14 +282,27 @@ export function CashierScreen() {
       }
 
       // Ajouter une opération de crédit si montant payé < total
-      if (clientId && remainingAmount > 0) {
-        addDebtOperation(clientId, {
+      if (remainingAmount > 0) {
+        // Si pas de client, créer un client "sans nom" pour la vente à crédit
+        let debtClientId = clientId
+        let debtClientInfo = newClientInfo
+
+        if (!debtClientId) {
+          const anonymousClient = addClient({
+            name: 'Client anonyme',
+            phone: 'N/A',
+          })
+          debtClientId = anonymousClient.id
+          debtClientInfo = { name: 'Client anonyme', phone: 'N/A' }
+        }
+
+        addDebtOperation(debtClientId, {
           date: Date.now(),
           type: 'PURCHASE',
           amount: remainingAmount,
           balance: remainingAmount,
           saleId: sale.id,
-        }, newClientInfo)
+        }, debtClientInfo)
       }
     } catch (e) {
       alert(`Erreur : ${e}`)
