@@ -28,15 +28,23 @@ export function useProducts() {
   }
 
   const updateProduct = (productId: string, updates: Partial<StoredProduct>) => {
+    // Only update if product belongs to current tenant
+    const product = getTenantProducts().find(p => p.id === productId)
+    if (!product) return
+
     setProducts(
       products.map(p =>
-        p.id === productId ? { ...p, ...updates } : p,
+        p.id === productId && p.tenantId === session?.tenantId ? { ...p, ...updates } : p,
       ),
     )
   }
 
   const deleteProduct = (productId: string) => {
-    setProducts(products.filter(p => p.id !== productId))
+    // Only delete if product belongs to current tenant
+    const product = getTenantProducts().find(p => p.id === productId)
+    if (!product) return
+
+    setProducts(products.filter(p => !(p.id === productId && p.tenantId === session?.tenantId)))
   }
 
   const decreaseStock = (productId: string, quantity: number): boolean => {

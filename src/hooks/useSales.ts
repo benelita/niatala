@@ -67,7 +67,7 @@ export function useSales() {
   }
 
   const cancelSale = (saleId: string, reason: string): Sale | null => {
-    const sale = sales.find(s => s.id === saleId)
+    const sale = getTenantSales().find(s => s.id === saleId)
     if (!sale) return null
 
     const updatedSale: Sale = {
@@ -77,7 +77,7 @@ export function useSales() {
       cancellationReason: reason,
     }
 
-    setSales(sales.map(s => (s.id === saleId ? updatedSale : s)))
+    setSales(sales.map(s => (s.id === saleId && s.tenantId === session?.tenantId ? updatedSale : s)))
     return updatedSale
   }
 

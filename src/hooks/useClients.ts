@@ -46,9 +46,13 @@ export function useClients() {
   }
 
   const updateClient = (clientId: string, updates: Partial<Client>) => {
+    // Only update if client belongs to current tenant
+    const client = getTenantClients().find(c => c.id === clientId)
+    if (!client) return
+
     setClients(
       clients.map(c =>
-        c.id === clientId ? { ...c, ...updates } : c,
+        c.id === clientId && c.tenantId === session?.tenantId ? { ...c, ...updates } : c,
       ),
     )
   }
