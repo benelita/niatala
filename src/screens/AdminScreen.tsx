@@ -119,16 +119,11 @@ export function AdminScreen({ session }: AdminScreenProps) {
         return
       }
 
-      // Display password once, then clear after 30 seconds
+      // Display password permanently in admin interface
       setCreatedCashierPassword(newCashierPassword)
       setCreatedCashierName(newCashierName)
       setCreatedCashierId(result.id)
       setVisiblePasswordId(result.id)
-
-      // Auto-clear password after 30 seconds for security
-      setTimeout(() => {
-        setCreatedCashierPassword(null)
-      }, 30000)
 
       setSuccess(`Caissier "${newCashierName}" créé avec succès`)
       setNewCashierName('')
