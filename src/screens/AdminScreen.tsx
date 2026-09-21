@@ -63,11 +63,10 @@ export function AdminScreen({ session }: AdminScreenProps) {
   // Cashiers list state
   const [cashiers, setCashiers] = useState<any[]>([])
 
-  // Created cashier password display
-  const [createdCashierPassword, setCreatedCashierPassword] = useState<string | null>(null)
-  const [createdCashierName, setCreatedCashierName] = useState<string | null>(null)
-  const [createdCashierId, setCreatedCashierId] = useState<string | null>(null)
+  // Cashier passwords storage
+  const [cashierPasswords, setCashierPasswords] = useState<Record<string, string>>({})
   const [visiblePasswordId, setVisiblePasswordId] = useState<string | null>(null)
+  const [createdCashierName, setCreatedCashierName] = useState<string | null>(null)
 
   // Load cashiers from API
   const loadCashiers = async () => {
@@ -119,10 +118,9 @@ export function AdminScreen({ session }: AdminScreenProps) {
         return
       }
 
-      // Display password permanently in admin interface
-      setCreatedCashierPassword(newCashierPassword)
+      // Store password for this cashier permanently
+      setCashierPasswords(prev => ({ ...prev, [result.id]: newCashierPassword }))
       setCreatedCashierName(newCashierName)
-      setCreatedCashierId(result.id)
       setVisiblePasswordId(result.id)
 
       setSuccess(`Caissier "${newCashierName}" créé avec succès`)
@@ -754,7 +752,7 @@ export function AdminScreen({ session }: AdminScreenProps) {
               </button>
             </form>
 
-            {createdCashierPassword && createdCashierName && (
+            {createdCashierName && (
               <div style={{
                 marginTop: '2rem',
                 padding: '1.5rem',
@@ -763,12 +761,9 @@ export function AdminScreen({ session }: AdminScreenProps) {
                 borderRadius: '0.75rem',
               }}>
                 <h4 style={{ margin: '0 0 1rem 0', color: '#1e40af' }}>📋 Identifiants du caissier "{createdCashierName}"</h4>
-                <p style={{ margin: '0.5rem 0', fontSize: '0.95rem' }}>
-                  <strong>Mot de passe:</strong> <code style={{ background: '#fff', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', fontFamily: 'monospace' }}>{createdCashierPassword}</code>
-                </p>
+                <p style={{ fontSize: '0.95rem', color: '#0c4a6e' }}>✅ Caissier créé avec succès. Son mot de passe est disponible dans le tableau ci-dessous.</p>
                 <button
                   onClick={() => {
-                    setCreatedCashierPassword(null)
                     setCreatedCashierName(null)
                   }}
                   style={{
@@ -782,7 +777,7 @@ export function AdminScreen({ session }: AdminScreenProps) {
                     fontSize: '0.9rem',
                   }}
                 >
-                  Masquer
+                  Fermer
                 </button>
               </div>
             )}
@@ -839,7 +834,7 @@ export function AdminScreen({ session }: AdminScreenProps) {
                         <td>{cashier.username}</td>
                         <td>
                           {(() => {
-                            const password = cashier.id === createdCashierId ? createdCashierPassword : null
+                            const password = cashierPasswords[cashier.id] || null
                             if (!password) return <span style={{ color: '#9ca3af' }}>-</span>
 
                             return (
