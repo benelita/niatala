@@ -84,6 +84,7 @@ export interface DebtOperation {
   amount: number
   balance: number
   saleId?: string
+  clientName?: string
 }
 
 export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'CASHIER'

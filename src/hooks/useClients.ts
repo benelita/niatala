@@ -65,6 +65,7 @@ export function useClients() {
     const operationWithId: DebtOperation = {
       ...operation,
       id: `op_${Date.now()}`,
+      clientName: clientInfo?.name || getTenantClients().find(c => c.id === clientId)?.name,
     }
 
     const clientExists = clients.some(c => c.id === clientId)
