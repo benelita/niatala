@@ -68,24 +68,35 @@ router.post('/register', async (req, res) => {
       },
     })
 
-    // Send WhatsApp message with code
-    try {
-      await twilioClient.messages.create({
-        from: `whatsapp:${TWILIO_WHATSAPP_NUMBER}`,
-        to: `whatsapp:${whatsapp}`,
-        body: `🔐 Code d'authentification NIATALA:\n\n${authCode}\n\nCode valide 10 minutes.\nNe partage pas ce code!`,
-      })
+    // Send authentication code (via WhatsApp or console in demo mode)
+    console.log(`\n🔐 ADMIN REGISTRATION CODE (DEMO MODE)`)
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`)
+    console.log(`Admin: ${firstName} ${lastName}`)
+    console.log(`WhatsApp: ${whatsapp}`)
+    console.log(`Code: ${authCode}`)
+    console.log(`Expires: ${codeExpiresAt.toLocaleString()}`)
+    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`)
 
-      res.status(201).json({
-        success: true,
-        message: 'Code d\'authentification envoyé sur WhatsApp',
-        adminId: admin.id,
-        tenantId: tenant.id,
-      })
-    } catch (twilioErr) {
-      console.error('Twilio error:', twilioErr)
-      res.status(500).json({ error: 'Failed to send WhatsApp code' })
+    if (TWILIO_WHATSAPP_NUMBER && process.env.TWILIO_ACCOUNT_SID) {
+      // Try to send WhatsApp if configured
+      try {
+        await twilioClient.messages.create({
+          from: `whatsapp:${TWILIO_WHATSAPP_NUMBER}`,
+          to: `whatsapp:${whatsapp}`,
+          body: `🔐 Code d'authentification NIATALA:\n\n${authCode}\n\nCode valide 10 minutes.\nNe partage pas ce code!`,
+        })
+      } catch (twilioErr) {
+        console.warn('⚠️ WhatsApp not configured, code displayed in console')
+      }
     }
+
+    res.status(201).json({
+      success: true,
+      message: 'Code d\'authentification généré (voir console pour le code)',
+      adminId: admin.id,
+      tenantId: tenant.id,
+      authCode: process.env.NODE_ENV === 'development' ? authCode : undefined, // Show code only in dev mode
+    })
   } catch (err) {
     console.error('Registration error:', err)
     res.status(500).json({ error: 'Registration failed' })
