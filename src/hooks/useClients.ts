@@ -1,5 +1,6 @@
 import type { Client, DebtOperation } from '../types'
 import { useStorage } from './useStorage'
+import { useAuthContext } from '../context/AuthContext'
 
 interface CreateClientInput {
   name: string
@@ -13,7 +14,12 @@ interface ClientWithOperations extends Client {
 }
 
 export function useClients() {
+  const { session } = useAuthContext()
   const [clients, setClients] = useStorage<ClientWithOperations[]>('niatala_clients', [])
+
+  const getTenantClients = (): ClientWithOperations[] => {
+    return clients.filter(c => c.tenantId === session?.tenantId)
+  }
 
   const addClient = (input: CreateClientInput): ClientWithOperations => {
     const newClient: ClientWithOperations = {
@@ -24,6 +30,7 @@ export function useClients() {
       createdAt: Date.now(),
       totalDebt: 0,
       operations: [],
+      tenantId: session?.tenantId,
     }
 
     setClients([...clients, newClient])
@@ -31,11 +38,11 @@ export function useClients() {
   }
 
   const getClientById = (clientId: string): ClientWithOperations | undefined => {
-    return clients.find(c => c.id === clientId)
+    return getTenantClients().find(c => c.id === clientId)
   }
 
   const getClientByName = (name: string): ClientWithOperations | undefined => {
-    return clients.find(c => c.name.toLowerCase() === name.toLowerCase())
+    return getTenantClients().find(c => c.name.toLowerCase() === name.toLowerCase())
   }
 
   const updateClient = (clientId: string, updates: Partial<Client>) => {
@@ -69,6 +76,7 @@ export function useClients() {
         createdAt: Date.now(),
         totalDebt: 0,
         operations: [],
+        tenantId: session?.tenantId,
       }
       targetClients = [...clients, newClient]
       console.log(`Created new client: ${clientId}`)
@@ -106,15 +114,15 @@ export function useClients() {
   }
 
   const getClientsWithDebt = (): ClientWithOperations[] => {
-    return clients.filter(c => c.totalDebt > 0)
+    return getTenantClients().filter(c => c.totalDebt > 0)
   }
 
   const getTotalDebts = (): number => {
-    return clients.reduce((sum, c) => sum + c.totalDebt, 0)
+    return getTenantClients().reduce((sum, c) => sum + c.totalDebt, 0)
   }
 
   return {
-    clients,
+    clients: getTenantClients(),
     addClient,
     getClientById,
     getClientByName,

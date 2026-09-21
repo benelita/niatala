@@ -11,6 +11,7 @@ export interface Product {
   customThresholdRed?: number
   createdAt?: number
   updatedAt?: number
+  tenantId?: string | null
 }
 
 export type StockStatus = 'NORMAL' | 'LOW' | 'CRITICAL' | 'OUTOFSTOCK'
@@ -45,6 +46,7 @@ export interface Client {
   address?: string
   createdAt: number
   totalDebt: number
+  tenantId?: string | null
 }
 
 export type PaymentMethod = 'cash' | 'wave' | 'orange_money' | 'free' | 'card' | 'credit'
@@ -72,6 +74,7 @@ export interface Sale {
   cashierId?: string
   cancelledAt?: number
   cancellationReason?: string
+  tenantId?: string | null
 }
 
 export interface DebtOperation {

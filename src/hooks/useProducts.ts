@@ -1,5 +1,6 @@
 import type { Product } from '../types'
 import { useStorage } from './useStorage'
+import { useAuthContext } from '../context/AuthContext'
 
 export interface StoredProduct extends Product {
   stock: number
@@ -9,21 +10,18 @@ export interface StoredProduct extends Product {
 }
 
 export function useProducts() {
-  const [products, setProducts] = useStorage<StoredProduct[]>('niatala_products', [
-    { id: '1', name: 'Coca-Cola 33cl', price: 500, costPrice: 350, category: 'Boissons', emoji: '🥤', stock: 50, alertThreshold: 10, useDefaultThresholds: true, barcode: 'CCL33' },
-    { id: '2', name: 'Eau 1,5L', price: 500, costPrice: 300, category: 'Boissons', emoji: '💧', stock: 30, alertThreshold: 8, useDefaultThresholds: true },
-    { id: '3', name: 'Pain', price: 250, costPrice: 150, category: 'Alimentation', emoji: '🍞', stock: 20, alertThreshold: 5, useDefaultThresholds: true },
-    { id: '4', name: 'Lait', price: 800, costPrice: 500, category: 'Alimentation', emoji: '🥛', stock: 15, alertThreshold: 3, useDefaultThresholds: true },
-    { id: '5', name: 'Riz 1kg', price: 1000, costPrice: 600, category: 'Alimentation', emoji: '🍚', stock: 25, alertThreshold: 5, useDefaultThresholds: true },
-    { id: '6', name: 'Savon', price: 500, costPrice: 300, category: 'Hygiène', emoji: '🧼', stock: 40, alertThreshold: 10, useDefaultThresholds: true },
-    { id: '7', name: 'Sucre 1kg', price: 800, costPrice: 500, category: 'Alimentation', emoji: '🍯', stock: 18, alertThreshold: 4, useDefaultThresholds: true },
-    { id: '8', name: 'Huile 1L', price: 1500, costPrice: 900, category: 'Maison', emoji: '🫗', stock: 12, alertThreshold: 3, useDefaultThresholds: true },
-  ])
+  const { session } = useAuthContext()
+  const [products, setProducts] = useStorage<StoredProduct[]>('niatala_products', [])
+
+  const getTenantProducts = (): StoredProduct[] => {
+    return products.filter(p => p.tenantId === session?.tenantId)
+  }
 
   const addProduct = (product: Omit<StoredProduct, 'id'>): StoredProduct => {
     const newProduct: StoredProduct = {
       ...product,
       id: `product_${Date.now()}`,
+      tenantId: session?.tenantId,
     }
     setProducts([...products, newProduct])
     return newProduct
@@ -42,7 +40,7 @@ export function useProducts() {
   }
 
   const decreaseStock = (productId: string, quantity: number): boolean => {
-    const product = products.find(p => p.id === productId)
+    const product = getTenantProducts().find(p => p.id === productId)
     if (!product || product.stock < quantity) {
       return false
     }
@@ -51,11 +49,11 @@ export function useProducts() {
   }
 
   const getProductById = (productId: string) => {
-    return products.find(p => p.id === productId)
+    return getTenantProducts().find(p => p.id === productId)
   }
 
   const getProductsByCategory = (category: string) => {
-    return products.filter(p => p.category === category)
+    return getTenantProducts().filter(p => p.category === category)
   }
 
   const getStockStatus = (product: StoredProduct): 'ok' | 'low' | 'out' => {
@@ -65,7 +63,7 @@ export function useProducts() {
   }
 
   return {
-    products,
+    products: getTenantProducts(),
     addProduct,
     updateProduct,
     deleteProduct,

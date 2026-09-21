@@ -1,5 +1,6 @@
 import type { Sale, SaleItem, PaymentMethod, SaleStatus } from '../types'
 import { useStorage } from './useStorage'
+import { useAuthContext } from '../context/AuthContext'
 
 interface CreateSaleInput {
   items: SaleItem[]
@@ -12,8 +13,14 @@ interface CreateSaleInput {
 }
 
 export function useSales() {
+  const { session } = useAuthContext()
   const [sales, setSales] = useStorage<Sale[]>('niatala_sales', [])
   const [saleCounter, setSaleCounter] = useStorage('niatala_sale_counter', 1000)
+
+  // Filter sales by current tenant
+  const getTenantSales = (): Sale[] => {
+    return sales.filter(s => s.tenantId === session?.tenantId)
+  }
 
   const generateSaleNumber = (): string => {
     const newCounter = saleCounter + 1
@@ -52,6 +59,7 @@ export function useSales() {
       remainingAmount: input.remainingAmount,
       status,
       cashierId: input.cashierId,
+      tenantId: session?.tenantId,
     }
 
     setSales([...sales, newSale])
@@ -74,23 +82,23 @@ export function useSales() {
   }
 
   const getSalesForClient = (clientId: string): Sale[] => {
-    return sales.filter(s => s.clientId === clientId)
+    return getTenantSales().filter(s => s.clientId === clientId)
   }
 
   const getSalesForCashier = (cashierId: string): Sale[] => {
-    return sales.filter(s => s.cashierId === cashierId)
+    return getTenantSales().filter(s => s.cashierId === cashierId)
   }
 
   const getSaleById = (saleId: string): Sale | undefined => {
-    return sales.find(s => s.id === saleId)
+    return getTenantSales().find(s => s.id === saleId)
   }
 
   const getSaleBySaleNumber = (saleNumber: string): Sale | undefined => {
-    return sales.find(s => s.saleNumber === saleNumber)
+    return getTenantSales().find(s => s.saleNumber === saleNumber)
   }
 
   const getActiveSales = (): Sale[] => {
-    return sales.filter(s => s.status !== 'CANCELLED')
+    return getTenantSales().filter(s => s.status !== 'CANCELLED')
   }
 
   const getTotalSales = (): number => {
@@ -102,7 +110,7 @@ export function useSales() {
   }
 
   return {
-    sales,
+    sales: getTenantSales(),
     addSale,
     cancelSale,
     getSalesForClient,
