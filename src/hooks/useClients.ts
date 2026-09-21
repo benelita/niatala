@@ -119,7 +119,10 @@ export function useClients() {
   }
 
   const getClientsWithDebt = (): ClientWithOperations[] => {
-    return getTenantClients().filter(c => c.totalDebt > 0)
+    console.log('📊 getClientsWithDebt: all clients =', clients.length, 'session?.tenantId =', session?.tenantId)
+    const debtClients = getTenantClients().filter(c => c.totalDebt > 0)
+    console.log('📊 getClientsWithDebt: clients with debt =', debtClients.length, debtClients)
+    return debtClients
   }
 
   const getTotalDebts = (): number => {
