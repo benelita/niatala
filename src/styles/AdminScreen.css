@@ -159,7 +159,8 @@
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 0.75rem;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .cashiers-table,

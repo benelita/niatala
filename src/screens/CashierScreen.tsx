@@ -156,16 +156,13 @@ export function CashierScreen() {
   }
 
   const handlePartialPayment = () => {
-    alert(`DEBUG 5: handlePartialPayment called. Method: ${partialPaymentData.method}, CashReceived: ${cashReceived}`)
-
     const paidAmount = partialPaymentData.method === 'cash' ? cashReceived : partialPaymentData.amount
 
     if (partialPaymentData.method === 'cash') {
       if (cashReceived === 0) {
-        alert('DEBUG: CashReceived est 0! Veuillez entrer la somme reçue')
+        alert('Veuillez entrer la somme reçue')
         return
       }
-      alert(`DEBUG 6: Calling completeCheckout with cash ${cashReceived}`)
     } else {
       if (paidAmount < 0 || paidAmount > total) {
         alert('Montant invalide')
@@ -210,8 +207,6 @@ export function CashierScreen() {
     clientInfo?: { id: string; name?: string; phone?: string },
     paidAmount?: number,
   ) => {
-    alert(`DEBUG 7: completeCheckout started`)
-
     if (cart.length === 0) {
       alert('Le panier est vide')
       return
@@ -226,10 +221,6 @@ export function CashierScreen() {
       if (clientInfo.name && clientInfo.phone) {
         // Nouveau client - passer les infos à addDebtOperation pour créer ensemble
         newClientInfo = { name: clientInfo.name, phone: clientInfo.phone }
-        alert(`DEBUG 7.1: Will create new client in addDebtOperation - ${clientId}`)
-      } else {
-        // Client existant
-        alert(`DEBUG 7.2: Using existing client - ${clientId}`)
       }
     }
 
@@ -246,8 +237,6 @@ export function CashierScreen() {
     const actualPaidAmount = paidAmount ?? total
     const remainingAmount = total - actualPaidAmount
 
-    alert(`DEBUG 8: Before addSale. Total: ${total}, Paid: ${actualPaidAmount}`)
-
     const sale = addSale({
       items: saleItems,
       total,
@@ -258,12 +247,9 @@ export function CashierScreen() {
       cashierId: session?.userId,
     })
 
-    alert(`DEBUG 9: After addSale. Sale ID: ${sale.id}`)
-
     try {
       // Enregistrer l'action dans l'audit
       if (session) {
-        alert(`DEBUG 9.1: logAction`)
         logAction(session.userId, session.username, session.role, 'CREATE_SALE', {
           reference: sale.saleNumber,
           amount: sale.total,
@@ -276,7 +262,6 @@ export function CashierScreen() {
 
       // Décrémenter le stock pour chaque article vendu (sauf sommes libres) - seulement si l'inventaire est activé
       if (enableInventory) {
-        alert(`DEBUG 9.2: decreaseStock`)
         let insufficientStock = false
         for (const item of regularItems) {
           if (!decreaseStock(item.id, item.quantity)) {
@@ -290,7 +275,6 @@ export function CashierScreen() {
       }
 
       // Enregistrer les sommes libres depuis le panier
-      alert(`DEBUG 9.3: addFreeAmount`)
       for (const item of cart) {
         if ((item as any).isFreeAmount) {
           addFreeAmount(sale.id, item.price)
@@ -298,19 +282,17 @@ export function CashierScreen() {
       }
 
       // Ajouter une opération de crédit si montant payé < total
-      alert(`DEBUG 9.4: addDebtOperation - clientId: ${clientId}, remainingAmount: ${remainingAmount}`)
       if (clientId && remainingAmount > 0) {
-        const debtOp = addDebtOperation(clientId, {
+        addDebtOperation(clientId, {
           date: Date.now(),
           type: 'PURCHASE',
           amount: remainingAmount,
           balance: remainingAmount,
           saleId: sale.id,
         }, newClientInfo)
-        alert(`DEBUG 9.5: Debt operation created - ${debtOp.id}`)
       }
     } catch (e) {
-      alert(`ERROR: ${e}`)
+      alert(`Erreur : ${e}`)
       return
     }
 
@@ -323,9 +305,8 @@ export function CashierScreen() {
       credit: 'CRÉDIT',
     }
 
-    alert(`DEBUG 10: Before final alert`)
     alert(
-      `Vente enregistrée : ${sale.saleNumber}\n` +
+      `✅ Vente enregistrée : ${sale.saleNumber}\n` +
       `Montant : ${total.toLocaleString('fr-FR')} FCFA\n` +
       `Payé : ${actualPaidAmount.toLocaleString('fr-FR')} FCFA (${methodLabels[method]})` +
       (remainingAmount > 0 ? `\nCrédit : ${remainingAmount.toLocaleString('fr-FR')} FCFA` : ''),
@@ -356,8 +337,6 @@ export function CashierScreen() {
   }
 
   const handleCheckout = () => {
-    alert(`DEBUG 1: Checkout start. Cart: ${cart.length}, Method: ${paymentMethod}`)
-
     if (cart.length === 0) {
       alert('Le panier est vide')
       return
@@ -367,15 +346,12 @@ export function CashierScreen() {
       return
     }
 
-    alert(`DEBUG 2: Avant switch. Method: ${paymentMethod}`)
-
     if (paymentMethod === 'credit') {
       setShowCreditModal(true)
       return
     }
 
     // Paiements partiels (cash, wave, card)
-    alert(`DEBUG 3: Opening partial payment modal`)
     setPartialPaymentData({
       amount: total,
       method: paymentMethod,
@@ -387,7 +363,6 @@ export function CashierScreen() {
       tab: 'search',
     })
     setShowPartialPaymentModal(true)
-    alert(`DEBUG 4: Partial payment modal should be open`)
   }
 
   const filteredClients = clients.filter(c =>
@@ -605,14 +580,12 @@ export function CashierScreen() {
                         </button>
                       )}
 
-                      {isAdmin && (
-                        <button
-                          className={`payment-btn ${paymentMethod === 'credit' ? 'selected' : ''}`}
-                          onClick={() => setPaymentMethod('credit')}
-                        >
-                          📒 CRÉDIT
-                        </button>
-                      )}
+                      <button
+                        className={`payment-btn ${paymentMethod === 'credit' ? 'selected' : ''}`}
+                        onClick={() => setPaymentMethod('credit')}
+                      >
+                        📒 CRÉDIT
+                      </button>
                     </>
                   )
                 })()}
@@ -768,14 +741,12 @@ export function CashierScreen() {
                           💳 CARTE
                         </button>
                       )}
-                      {isAdmin && (
-                        <button
-                          className={`fullscreen-payment-btn ${paymentMethod === 'credit' ? 'selected' : ''}`}
-                          onClick={() => setPaymentMethod('credit')}
-                        >
-                          📒 CRÉDIT
-                        </button>
-                      )}
+                      <button
+                        className={`fullscreen-payment-btn ${paymentMethod === 'credit' ? 'selected' : ''}`}
+                        onClick={() => setPaymentMethod('credit')}
+                      >
+                        📒 CRÉDIT
+                      </button>
                     </>
                   )
                 })()}

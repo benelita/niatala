@@ -2,22 +2,61 @@ import { useState } from 'react'
 import { useInventory } from '../hooks/useInventory'
 import { useAuthContext } from '../context/AuthContext'
 import { getStockStatusLabel } from '../services/inventoryService'
+import { downloadCSV } from '../utils/csvExport'
 import '../styles/InventoryScreen.css'
+
+type SortColumn = 'name' | 'category' | 'costPrice' | 'price' | 'stock' | 'status' | null
+type SortDirection = 'asc' | 'desc'
 
 export function InventoryScreen() {
   const { products, getStockStatusForProduct, getThresholdsForProduct, calculateStockValue, getProductsInStatus, adjustStock } = useInventory()
   const { session } = useAuthContext()
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'NORMAL' | 'LOW' | 'CRITICAL' | 'OUTOFSTOCK'>('ALL')
   const [searchTerm, setSearchTerm] = useState('')
+  const [filterCategory, setFilterCategory] = useState<string>('ALL')
+  const [sortColumn, setSortColumn] = useState<SortColumn>(null)
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
   const [adjustmentQuantity, setAdjustmentQuantity] = useState('')
   const [adjustmentMotif, setAdjustmentMotif] = useState('')
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set())
 
-  if (!session || session.role !== 'ADMIN') {
+  // Get unique categories
+  const categories = ['ALL', ...new Set(products.map(p => p.category))].sort()
+
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortColumn(column)
+      setSortDirection('asc')
+    }
+  }
+
+  const getSortArrow = (column: SortColumn) => {
+    if (sortColumn !== column) return '⬇️'
+    return sortDirection === 'asc' ? '⬆️' : '⬇️'
+  }
+
+  // Check if user has permission to access inventory
+  const hasInventoryPermission = (() => {
+    if (session.role === 'ADMIN' || session.role === 'SUPER_ADMIN') return true
+    // For CASHIER, check temporary access from localStorage
+    try {
+      const perms = JSON.parse(localStorage.getItem('cashier_inventory_access') || '{}')
+      const expiresAt = perms[session.userId]?.expiresAt
+      if (expiresAt && expiresAt > Date.now()) return true
+    } catch {
+      // Ignore
+    }
+    return false
+  })()
+
+  if (!session || !hasInventoryPermission) {
     return (
       <div className="inventory-screen">
         <div className="access-denied">
-          <p>⛔ Accès réservé aux administrateurs</p>
+          <p>⛔ Accès refusé. L'administrateur doit d'abord vous autoriser à gérer l'inventaire.</p>
         </div>
       </div>
     )
@@ -37,11 +76,58 @@ export function InventoryScreen() {
     filteredProducts = filteredProducts.filter(p => getStockStatusForProduct(p) === filterStatus)
   }
 
+  if (filterCategory !== 'ALL') {
+    filteredProducts = filteredProducts.filter(p => p.category === filterCategory)
+  }
+
   if (searchTerm) {
     filteredProducts = filteredProducts.filter(p =>
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.category.toLowerCase().includes(searchTerm.toLowerCase())
     )
+  }
+
+  // Sort products
+  if (sortColumn) {
+    filteredProducts = [...filteredProducts].sort((a, b) => {
+      let aVal: any = ''
+      let bVal: any = ''
+
+      switch (sortColumn) {
+        case 'name':
+          aVal = a.name
+          bVal = b.name
+          break
+        case 'category':
+          aVal = a.category
+          bVal = b.category
+          break
+        case 'costPrice':
+          aVal = a.costPrice || 0
+          bVal = b.costPrice || 0
+          break
+        case 'price':
+          aVal = a.price || 0
+          bVal = b.price || 0
+          break
+        case 'stock':
+          aVal = a.stock || 0
+          bVal = b.stock || 0
+          break
+        case 'status':
+          aVal = getStockStatusForProduct(a)
+          bVal = getStockStatusForProduct(b)
+          break
+      }
+
+      if (typeof aVal === 'string') {
+        aVal = aVal.toLowerCase()
+        bVal = (bVal as string).toLowerCase()
+        return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
+      } else {
+        return sortDirection === 'asc' ? aVal - bVal : bVal - aVal
+      }
+    })
   }
 
   const handleAdjustStock = () => {
@@ -159,20 +245,83 @@ export function InventoryScreen() {
             className="search-input"
           />
         </div>
+
+        <div className="filter-group" style={{ marginTop: '1rem' }}>
+          <label>Filtrer par catégorie:</label>
+          <select
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+            style={{
+              padding: '0.5rem',
+              borderRadius: '0.375rem',
+              border: '1px solid var(--border)',
+              backgroundColor: 'var(--bg-secondary)',
+              color: 'var(--text)',
+              cursor: 'pointer',
+              minWidth: '150px',
+            }}
+          >
+            {categories.map(cat => (
+              <option key={cat} value={cat}>
+                {cat === 'ALL' ? '📂 Toutes les catégories' : `📂 ${cat}`}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', justifyContent: 'flex-end' }}>
+        <button
+          onClick={() => {
+            const data = filteredProducts.map(p => ({
+              'Produit': p.name,
+              'Catégorie': p.category,
+              'Prix d\'achat': p.costPrice ? `${p.costPrice} FCFA` : '-',
+              'Prix de vente': `${p.price} FCFA`,
+              'Stock': p.stock,
+              'Statut': getStockStatusForProduct(p),
+            }))
+            downloadCSV(data, `Inventaire_${new Date().toLocaleDateString('fr-FR')}`)
+          }}
+          style={{
+            padding: '0.5rem 1rem',
+            background: '#10b981',
+            color: 'white',
+            border: 'none',
+            borderRadius: '0.375rem',
+            cursor: 'pointer',
+            fontSize: '0.9rem',
+            fontWeight: '600',
+          }}
+        >
+          📥 Exporter tout ({filteredProducts.length})
+        </button>
       </div>
 
       <div className="products-table-section">
         <table className="products-table">
           <thead>
             <tr>
-              <th>Produit</th>
-              <th>Catégorie</th>
-              <th>Prix d'achat</th>
-              <th>Prix de vente</th>
-              <th>Stock</th>
+              <th style={{ cursor: 'pointer', textAlign: 'left', position: 'relative', paddingRight: '1.5rem' }} onClick={() => handleSort('name')}>
+                Produit <span style={{ position: 'absolute', right: '0.25rem', bottom: '0.25rem' }}>{getSortArrow('name')}</span>
+              </th>
+              <th style={{ cursor: 'pointer', textAlign: 'left', position: 'relative', paddingRight: '1.5rem' }} onClick={() => handleSort('category')}>
+                Catégorie <span style={{ position: 'absolute', right: '0.25rem', bottom: '0.25rem' }}>{getSortArrow('category')}</span>
+              </th>
+              <th style={{ cursor: 'pointer', textAlign: 'left', position: 'relative', paddingRight: '1.5rem' }} onClick={() => handleSort('costPrice')}>
+                Prix d'achat <span style={{ position: 'absolute', right: '0.25rem', bottom: '0.25rem' }}>{getSortArrow('costPrice')}</span>
+              </th>
+              <th style={{ cursor: 'pointer', textAlign: 'left', position: 'relative', paddingRight: '1.5rem' }} onClick={() => handleSort('price')}>
+                Prix de vente <span style={{ position: 'absolute', right: '0.25rem', bottom: '0.25rem' }}>{getSortArrow('price')}</span>
+              </th>
+              <th style={{ cursor: 'pointer', textAlign: 'left', position: 'relative', paddingRight: '1.5rem' }} onClick={() => handleSort('stock')}>
+                Stock <span style={{ position: 'absolute', right: '0.25rem', bottom: '0.25rem' }}>{getSortArrow('stock')}</span>
+              </th>
               <th>Seuil O</th>
               <th>Seuil R</th>
-              <th>Statut</th>
+              <th style={{ cursor: 'pointer', textAlign: 'left', position: 'relative', paddingRight: '1.5rem' }} onClick={() => handleSort('status')}>
+                Statut <span style={{ position: 'absolute', right: '0.25rem', bottom: '0.25rem' }}>{getSortArrow('status')}</span>
+              </th>
               <th>Actions</th>
             </tr>
           </thead>

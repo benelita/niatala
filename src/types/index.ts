@@ -83,7 +83,7 @@ export interface DebtOperation {
   saleId?: string
 }
 
-export type UserRole = 'ADMIN' | 'CASHIER'
+export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'CASHIER'
 
 export interface User {
   id: string
@@ -100,7 +100,11 @@ export interface AuthSession {
   userId: string
   username: string
   name: string
+  firstName?: string
+  lastName?: string
+  whatsapp?: string
   role: UserRole
+  tenantId?: string | null
   loginTime: number
 }
 

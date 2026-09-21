@@ -1,0 +1,634 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// TENANTS - Multi-tenant foundation
+// ============================================================================
+
+model Tenant {
+  id                  String   @id @default(uuid()) @db.Uuid
+  name                String   @db.VarChar(255)
+  slug                String   @unique @db.VarChar(255)
+  status              String   @default("ACTIVE") @db.VarChar(50) // ACTIVE, SUSPENDED, DELETED
+
+  businessName        String?  @db.VarChar(255)
+  businessPhone       String?  @db.VarChar(20)
+  businessAddress     String?  @db.Text
+  businessEmail       String?  @db.VarChar(255)
+
+  currency            String   @default("XOF") @db.VarChar(3)
+  language            String   @default("fr") @db.VarChar(5)
+
+  ownerId             String?  @db.Uuid
+  subscriptionStatus  String   @default("TRIAL") @db.VarChar(50) // TRIAL, ACTIVE, SUSPENDED
+  subscriptionExpiry  DateTime?
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  users               User[]
+  auditLogs           AuditLog[]
+  categories          Category[]
+  products            Product[]
+  stockMovements      StockMovement[]
+  clients             Client[]
+  sales               Sale[]
+  credits             Credit[]
+  freeAmounts         FreeAmount[]
+  thresholdSettings   StockThresholdSettings?
+  inventoryAuthorizations InventoryAuthorization[]
+  externalVendors     ExternalVendor[]
+  externalVendorSales ExternalVendorSale[]
+  externalVendorPayments ExternalVendorPayment[]
+
+  @@index([status])
+  @@index([slug])
+}
+
+// ============================================================================
+// USERS - Multi-role, multi-tenant user management
+// ============================================================================
+
+model User {
+  id                  String   @id @default(uuid()) @db.Uuid
+
+  // Tenant relationship (NULL = SUPER_ADMIN)
+  tenantId            String?  @db.Uuid
+
+  // Identity
+  name                String   @db.VarChar(255)
+  firstName           String?  @db.VarChar(255)  // Admin profile: first name
+  lastName            String?  @db.VarChar(255)  // Admin profile: last name
+  username            String   @db.VarChar(255)
+  email               String?  @db.VarChar(255)
+  phone               String?  @db.VarChar(20)
+  whatsapp            String?  @db.VarChar(20)   // Admin profile: WhatsApp number
+
+  // Security - NEVER store plaintext passwords
+  passwordHash        String   @db.VarChar(255) // bcrypt hashed
+  passwordChangedAt   DateTime?
+  resetCode           String?  @db.VarChar(10)  // Temporary reset code
+  resetCodeExpiresAt  DateTime?                 // When reset code expires
+
+  // Role-based access control
+  role                String   @db.VarChar(50) // SUPER_ADMIN, ADMIN, CAISSIER
+  status              String   @default("ACTIVE") @db.VarChar(50) // ACTIVE, DISABLED, SUSPENDED
+
+  // Audit trail
+  createdAt           DateTime @default(now())
+  createdBy           String?  @db.Uuid
+  updatedAt           DateTime @updatedAt
+  updatedBy           String?  @db.Uuid
+  lastLogin           DateTime?
+  lastIp              String?  @db.VarChar(45)
+
+  // Relations
+  tenant              Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sessions            Session[]
+  sales               Sale[]
+  stockMovements      StockMovement[]
+  creditPayments      CreditPayment[]
+  freeAmountsCreated  FreeAmount[]
+  freeAmountsIdentified FreeAmount[] @relation("FreeAmountIdentifiedBy")
+  inventoryAuthorizationsReceived InventoryAuthorization[]
+  inventoryAuthorizationsGranted InventoryAuthorization[] @relation("InventoryAuthorizationGrantedBy")
+  inventoryAuthorizationsRevoked InventoryAuthorization[] @relation("InventoryAuthorizationRevokedBy")
+  externalVendorSales ExternalVendorSale[]
+  externalVendorPayments ExternalVendorPayment[]
+
+  // Constraints
+  @@unique([tenantId, username], name: "unique_username_per_tenant")
+  @@index([tenantId])
+  @@index([role])
+  @@index([status])
+  @@index([lastLogin])
+}
+
+// ============================================================================
+// SESSIONS - JWT token tracking
+// ============================================================================
+
+model Session {
+  id                  String   @id @default(uuid()) @db.Uuid
+
+  userId              String   @db.Uuid
+
+  // JWT tracking (NOT storing full token, only hash)
+  tokenHash           String   @unique @db.VarChar(255) // SHA-256 hash of JWT
+  expiresAt           DateTime
+
+  // Session metadata
+  createdAt           DateTime @default(now())
+  ipAddress           String?  @db.VarChar(45)
+  userAgent           String?  @db.Text
+
+  // Revocation
+  revokedAt           DateTime?
+  revokeReason        String?  @db.VarChar(255)
+
+  // Relations
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@index([expiresAt])
+}
+
+// ============================================================================
+// AUDIT_LOGS - Centralized audit trail (NOT per-tenant)
+// ============================================================================
+
+model AuditLog {
+  id                  String   @id @default(uuid()) @db.Uuid
+
+  // Actor
+  userId              String?  @db.Uuid // NULL = system action
+  tenantId            String?  @db.Uuid // NULL = global action
+
+  // Action details
+  action              String   @db.VarChar(255)
+  resourceType        String?  @db.VarChar(255) // SALE, PAYMENT, USER, TENANT, etc.
+  resourceId          String?  @db.Uuid
+
+  // Changes tracking
+  details             Json?    // Additional context
+  changes             Json?    // Before/after for modifications
+
+  // Sensitive data access tracking
+  accessedDataType    String?  @db.VarChar(255) // CLIENT_PHONE, PAYMENT_REF, etc.
+  requiresAudit       Boolean  @default(false)  // Marks sensitive operations
+
+  // Metadata
+  ipAddress           String?  @db.VarChar(45)
+  userAgent           String?  @db.Text
+  status              String   @default("SUCCESS") @db.VarChar(50) // SUCCESS, FAILED, DENIED
+
+  createdAt           DateTime @default(now())
+
+  // Relations
+  tenant              Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tenantId])
+  @@index([action])
+  @@index([createdAt])
+  @@index([requiresAudit])
+}
+
+// ============================================================================
+// CATEGORY - Product categories per tenant
+// ============================================================================
+
+model Category {
+  id                  String   @id @default(uuid()) @db.Uuid
+  tenantId            String   @db.Uuid
+  name                String   @db.VarChar(255)
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  products            Product[]
+
+  // Constraints
+  @@unique([tenantId, name], name: "unique_category_per_tenant")
+  @@index([tenantId])
+}
+
+// ============================================================================
+// PRODUCT - Products per tenant
+// ============================================================================
+
+model Product {
+  id                  String   @id @default(uuid()) @db.Uuid
+  tenantId            String   @db.Uuid
+  categoryId          String?  @db.Uuid
+
+  // Basic info
+  name                String   @db.VarChar(255)
+  emoji               String?  @db.VarChar(10)
+
+  // Pricing
+  costPrice           Decimal  @default(0) @db.Decimal(10, 2)
+  salePrice           Decimal  @default(0) @db.Decimal(10, 2)
+
+  // Stock
+  currentStock        Int      @default(0)
+
+  // Thresholds
+  useDefaultThresholds Boolean @default(true)
+  customThresholdOrange Int?
+  customThresholdRed  Int?
+
+  // Metadata
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category            Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  saleItems           SaleItem[]
+  stockMovements      StockMovement[]
+
+  // Constraints
+  @@unique([tenantId, name], name: "unique_product_per_tenant")
+  @@index([tenantId])
+  @@index([categoryId])
+}
+
+// ============================================================================
+// STOCK_MOVEMENT - Track all stock changes
+// ============================================================================
+
+model StockMovement {
+  id                  String   @id @default(uuid()) @db.Uuid
+  tenantId            String   @db.Uuid
+  productId           String   @db.Uuid
+
+  // Type of movement
+  type                String   @db.VarChar(50) // SALE, RETURN, ADJUSTMENT, CANCELLATION, REFUND, LOSS, ENTRY
+
+  // Stock tracking
+  quantity            Int
+  stockBefore         Int
+  stockAfter          Int
+
+  // Context
+  userId              String?  @db.Uuid // User responsible for movement
+  reference           String?  @db.VarChar(255) // Sale ID, Invoice #, etc
+  reason              String?  @db.Text
+
+  createdAt           DateTime @default(now())
+
+  // Relations
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  product             Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user                User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([productId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// CLIENT - Customers per tenant
+// ============================================================================
+
+model Client {
+  id                  String   @id @default(uuid()) @db.Uuid
+  tenantId            String   @db.Uuid
+
+  // Identity
+  name                String   @db.VarChar(255)
+  phone               String?  @db.VarChar(20)
+  email               String?  @db.VarChar(255)
+  address             String?  @db.Text
+
+  // Debt tracking
+  totalDebt           Decimal  @default(0) @db.Decimal(12, 2)
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sales               Sale[]
+  credits             Credit[]
+
+  // Constraints
+  @@unique([tenantId, phone], name: "unique_phone_per_tenant")
+  @@index([tenantId])
+  @@index([phone])
+}
+
+// ============================================================================
+// SALE - Individual sales/transactions
+// ============================================================================
+
+model Sale {
+  id                  String   @id @default(uuid()) @db.Uuid
+  tenantId            String   @db.Uuid
+
+  // Sale metadata
+  saleNumber          String   @db.VarChar(255) // Generated sale reference
+  userId              String?  @db.Uuid // Cashier responsible
+  clientId            String?  @db.Uuid // NULL for cash/anonymous sales
+
+  // Amounts
+  totalAmount         Decimal  @default(0) @db.Decimal(12, 2)
+  paidAmount          Decimal  @default(0) @db.Decimal(12, 2)
+  creditAmount        Decimal  @default(0) @db.Decimal(12, 2) // Amount credited
+
+  // Payment
+  paymentMethod       String   @db.VarChar(50) // cash, wave, orange_money, free, card, credit
+  paymentReference    String?  @db.VarChar(255) // External payment reference
+
+  // Status tracking
+  status              String   @default("PAID") @db.VarChar(50) // PAID, CREDIT, PARTIAL_CREDIT, SETTLED, CANCELLED
+
+  // Cancellation tracking
+  cancelledAt         DateTime?
+  cancellationReason  String?  @db.Text
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user                User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  client              Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  items               SaleItem[]
+  freeAmounts         FreeAmount[]
+  credit              Credit?
+
+  @@unique([tenantId, saleNumber], name: "unique_sale_number_per_tenant")
+  @@index([tenantId])
+  @@index([userId])
+  @@index([clientId])
+  @@index([createdAt])
+  @@index([status])
+}
+
+// ============================================================================
+// SALE_ITEM - Line items in a sale
+// ============================================================================
+
+model SaleItem {
+  id                  String   @id @default(uuid()) @db.Uuid
+  saleId              String   @db.Uuid
+  productId           String?  @db.Uuid // NULL if product was deleted
+
+  // Item details at time of sale (immutable)
+  productName         String   @db.VarChar(255)
+  quantity            Int
+  unitPrice           Decimal  @db.Decimal(10, 2) // Price at moment of sale
+  totalPrice          Decimal  @db.Decimal(12, 2) // quantity * unitPrice
+
+  createdAt           DateTime @default(now())
+
+  // Relations
+  sale                Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product             Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([saleId])
+  @@index([productId])
+}
+
+// ============================================================================
+// CREDIT - Debt/credit for clients
+// ============================================================================
+
+model Credit {
+  id                  String   @id @default(uuid()) @db.Uuid
+  tenantId            String   @db.Uuid
+  clientId            String   @db.Uuid
+  saleId              String?  @db.Uuid @unique // One credit per sale
+
+  // Amount tracking
+  initialAmount       Decimal  @db.Decimal(12, 2)
+  paidAmount          Decimal  @default(0) @db.Decimal(12, 2)
+  remainingAmount     Decimal  @db.Decimal(12, 2)
+
+  // Status
+  status              String   @default("ACTIVE") @db.VarChar(50) // ACTIVE, SETTLED, CANCELLED
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  client              Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  sale                Sale?    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  payments            CreditPayment[]
+
+  @@index([tenantId])
+  @@index([clientId])
+  @@index([saleId])
+  @@index([status])
+}
+
+// ============================================================================
+// CREDIT_PAYMENT - Payments toward credits
+// ============================================================================
+
+model CreditPayment {
+  id                  String   @id @default(uuid()) @db.Uuid
+  creditId            String   @db.Uuid
+
+  // Payment details
+  amount              Decimal  @db.Decimal(12, 2)
+  paymentMethod       String   @db.VarChar(50) // cash, wave, orange_money, free, card
+  paymentReference    String?  @db.VarChar(255)
+
+  // Context
+  userId              String?  @db.Uuid // Cashier who recorded payment
+
+  createdAt           DateTime @default(now())
+
+  // Relations
+  credit              Credit   @relation(fields: [creditId], references: [id], onDelete: Cascade)
+  user                User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([creditId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// FREE_AMOUNT - "Sommes libres" in sales
+// ============================================================================
+
+model FreeAmount {
+  id                  String   @id @default(uuid()) @db.Uuid
+  tenantId            String   @db.Uuid
+  saleId              String   @db.Uuid
+
+  // Amount details
+  amount              Decimal  @db.Decimal(12, 2)
+
+  // Classification
+  type                String?  @db.VarChar(50) // INTERNAL, EXTERNAL
+  objectName          String?  @db.VarChar(255) // What is this amount for
+  vendorName          String?  @db.VarChar(255) // Who provided it
+
+  // Identification
+  status              String   @default("PENDING") @db.VarChar(50) // PENDING, IDENTIFIED
+  identifiedAt        DateTime?
+  identifiedBy        String?  @db.Uuid
+
+  // Context
+  userId              String?  @db.Uuid // User who added it
+
+  createdAt           DateTime @default(now())
+
+  // Relations
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sale                Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  user                User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  identifiedByUser    User?    @relation("FreeAmountIdentifiedBy", fields: [identifiedBy], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([saleId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// STOCK_THRESHOLD_SETTINGS - Default thresholds per tenant (optional)
+// ============================================================================
+
+model StockThresholdSettings {
+  id                  String   @id @default(uuid()) @db.Uuid
+  tenantId            String   @unique @db.Uuid
+
+  defaultThresholdOrange Int  @default(10)
+  defaultThresholdRed    Int  @default(5)
+
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+// ============================================================================
+// INVENTORY_AUTHORIZATION - Admin authorization for cashiers to do inventory
+// ============================================================================
+
+model InventoryAuthorization {
+  id                  String   @id @default(uuid()) @db.Uuid
+  tenantId            String   @db.Uuid
+  userId              String   @db.Uuid
+
+  // Authorization tracking
+  grantedBy           String   @db.Uuid  // Admin who granted
+  grantedAt           DateTime @default(now())
+  expiresAt           DateTime  // 12 hours after grantedAt
+
+  // Revocation
+  revokedAt           DateTime?
+  revokedBy           String?  @db.Uuid
+
+  // Relations
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  grantedByUser       User     @relation("InventoryAuthorizationGrantedBy", fields: [grantedBy], references: [id], onDelete: Cascade)
+  revokedByUser       User?    @relation("InventoryAuthorizationRevokedBy", fields: [revokedBy], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, userId], name: "unique_inventory_auth_per_user")
+  @@index([tenantId])
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ============================================================================
+// EXTERNAL_VENDOR - Vendors external to the business
+// ============================================================================
+
+model ExternalVendor {
+  id                  String   @id @default(uuid()) @db.Uuid
+  tenantId            String   @db.Uuid
+
+  // Vendor info
+  name                String   @db.VarChar(255)
+  phone               String   @db.VarChar(20)
+
+  // Balance tracking
+  totalSales          Decimal  @default(0) @db.Decimal(12, 2)
+  totalPaid           Decimal  @default(0) @db.Decimal(12, 2)
+  balance             Decimal  @default(0) @db.Decimal(12, 2) // totalSales - totalPaid
+
+  // Status
+  status              String   @default("ACTIVE") @db.VarChar(50) // ACTIVE, SUSPENDED
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sales               ExternalVendorSale[]
+  payments            ExternalVendorPayment[]
+
+  @@unique([tenantId, phone], name: "unique_vendor_phone_per_tenant")
+  @@index([tenantId])
+  @@index([status])
+}
+
+// ============================================================================
+// EXTERNAL_VENDOR_SALE - Sales from external vendors
+// ============================================================================
+
+model ExternalVendorSale {
+  id                  String   @id @default(uuid()) @db.Uuid
+  tenantId            String   @db.Uuid
+  vendorId            String   @db.Uuid
+
+  // Sale details
+  saleNumber          String   @db.VarChar(255) // Generated reference
+  amount              Decimal  @db.Decimal(12, 2)
+  description         String?  @db.Text // What was sold
+
+  // Status
+  status              String   @default("RECORDED") @db.VarChar(50) // RECORDED, PAID
+
+  // Recording context
+  userId              String?  @db.Uuid // Cashier who recorded
+  recordedAt          DateTime @default(now())
+
+  createdAt           DateTime @default(now())
+
+  // Relations
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  vendor              ExternalVendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  user                User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, saleNumber], name: "unique_external_sale_number_per_tenant")
+  @@index([tenantId])
+  @@index([vendorId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// EXTERNAL_VENDOR_PAYMENT - Payments to external vendors
+// ============================================================================
+
+model ExternalVendorPayment {
+  id                  String   @id @default(uuid()) @db.Uuid
+  tenantId            String   @db.Uuid
+  vendorId            String   @db.Uuid
+
+  // Payment details
+  amount              Decimal  @db.Decimal(12, 2)
+  paymentMethod       String   @db.VarChar(50) // cash, wave, orange_money, free
+  paymentReference    String?  @db.VarChar(255) // External reference for non-cash
+
+  // Context
+  userId              String?  @db.Uuid // User who recorded
+  notes               String?  @db.Text
+
+  createdAt           DateTime @default(now())
+
+  // Relations
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  vendor              ExternalVendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  user                User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([vendorId])
+  @@index([userId])
+  @@index([createdAt])
+}

@@ -1,4 +1,4 @@
-import type { AuditLog, AuditActionType } from '../types'
+import type { AuditLog, AuditActionType, UserRole } from '../types'
 
 const AUDIT_KEY = 'niatala_audit'
 
@@ -12,7 +12,7 @@ function getCurrentDateTime() {
 export function logAction(
   userId: string,
   username: string,
-  userRole: 'ADMIN' | 'CASHIER',
+  userRole: UserRole,
   action: AuditActionType,
   options?: {
     reference?: string

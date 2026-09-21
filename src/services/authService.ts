@@ -1,129 +1,271 @@
-import type { User, AuthSession } from '../types'
+/**
+ * Frontend Auth Service
+ * Communicates with backend API for authentication
+ * Uses httpOnly cookies for session persistence
+ */
 
-// Simple hash function for demo (NOT secure for production)
-function hashPassword(password: string): string {
-  let hash = 0
-  for (let i = 0; i < password.length; i++) {
-    const char = password.charCodeAt(i)
-    hash = (hash << 5) - hash + char
-    hash = hash & hash // Convert to 32bit integer
+import type { AuthSession } from '../types'
+
+// Auto-detect API URL based on current host
+export const getApiUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL
   }
-  return Math.abs(hash).toString(36)
+  // Use current hostname (works for localhost AND IP addresses)
+  const host = window.location.hostname
+  const port = 3001
+  return `http://${host}:${port}/api`
 }
 
-function verifyPassword(password: string, hash: string): boolean {
-  return hashPassword(password) === hash
+const API_URL = getApiUrl()
+
+export interface LoginRequest {
+  username: string
+  password: string
 }
 
-const USERS_KEY = 'niatala_users'
-const SESSION_KEY = 'niatala_session'
+export interface LoginResponse {
+  user: {
+    id: string
+    username: string
+    name: string
+    role: string
+    tenantId?: string | null
+  }
+  message: string
+}
 
-// Initialize with default admin user
-function initializeDefaultUsers() {
-  const stored = localStorage.getItem(USERS_KEY)
-  if (!stored) {
-    const defaultUsers: User[] = [
-      {
-        id: 'admin_001',
-        name: 'Administrateur',
-        username: 'admin',
-        passwordHash: hashPassword('admin123'),
-        role: 'ADMIN',
-        status: 'ACTIVE',
-        createdAt: Date.now(),
+export interface CurrentUserResponse {
+  user: {
+    id: string
+    username: string
+    name: string
+    role: string
+    tenantId?: string | null
+  }
+}
+
+/**
+ * Login user via backend API
+ * Backend returns httpOnly cookie with session
+ */
+export async function login(username: string, password: string): Promise<AuthSession | null> {
+  try {
+    const response = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-    ]
-    localStorage.setItem(USERS_KEY, JSON.stringify(defaultUsers))
-  }
-}
+      credentials: 'include', // Include cookies
+      body: JSON.stringify({ username, password }),
+    })
 
-export function getUsers(): User[] {
-  initializeDefaultUsers()
-  const stored = localStorage.getItem(USERS_KEY)
-  return stored ? JSON.parse(stored) : []
-}
+    if (!response.ok) {
+      console.error('[AUTH] Login failed:', response.status)
+      return null
+    }
 
-export function createUser(name: string, username: string, password: string, role: 'ADMIN' | 'CASHIER'): User {
-  const users = getUsers()
+    const data: LoginResponse = await response.json()
 
-  if (users.some(u => u.username === username)) {
-    throw new Error('Username already exists')
-  }
+    // Backend sets httpOnly cookie automatically
+    // We just need to return the session info
+    const session: AuthSession = {
+      userId: data.user.id,
+      username: data.user.username,
+      name: data.user.name,
+      role: data.user.role as 'SUPER_ADMIN' | 'ADMIN' | 'CASHIER',
+      tenantId: data.user.tenantId,
+      loginTime: Date.now(),
+    }
 
-  const newUser: User = {
-    id: `user_${Date.now()}`,
-    name,
-    username,
-    passwordHash: hashPassword(password),
-    role,
-    status: 'ACTIVE',
-    createdAt: Date.now(),
-  }
+    // Store in localStorage for quick access (NOT source of truth)
+    localStorage.setItem('niatala_session', JSON.stringify(session))
 
-  users.push(newUser)
-  localStorage.setItem(USERS_KEY, JSON.stringify(users))
-  return newUser
-}
-
-export function login(username: string, password: string): AuthSession | null {
-  const users = getUsers()
-  const user = users.find(u => u.username === username)
-
-  if (!user || user.status === 'DISABLED') {
+    console.log('[AUTH] Login successful:', username)
+    return session
+  } catch (error) {
+    console.error('[AUTH] Login error:', error)
     return null
   }
-
-  if (!verifyPassword(password, user.passwordHash)) {
-    return null
-  }
-
-  // Update last login
-  user.lastLogin = Date.now()
-  localStorage.setItem(USERS_KEY, JSON.stringify(users))
-
-  const session: AuthSession = {
-    userId: user.id,
-    username: user.username,
-    name: user.name,
-    role: user.role,
-    loginTime: Date.now(),
-  }
-
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session))
-  return session
 }
 
-export function logout(): void {
-  localStorage.removeItem(SESSION_KEY)
-}
+/**
+ * Logout user via backend API
+ * Revokes session on server
+ */
+export async function logout(): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_URL}/auth/logout`, {
+      method: 'POST',
+      credentials: 'include', // Include cookies
+    })
 
-export function getCurrentSession(): AuthSession | null {
-  const stored = localStorage.getItem(SESSION_KEY)
-  return stored ? JSON.parse(stored) : null
-}
+    // Clear local session regardless of response
+    localStorage.removeItem('niatala_session')
 
-export function isAuthenticated(): boolean {
-  return getCurrentSession() !== null
-}
+    if (!response.ok) {
+      console.warn('[AUTH] Logout api returned', response.status)
+    }
 
-export function updateUserStatus(userId: string, status: 'ACTIVE' | 'DISABLED'): void {
-  const users = getUsers()
-  const user = users.find(u => u.id === userId)
-  if (user) {
-    user.status = status
-    localStorage.setItem(USERS_KEY, JSON.stringify(users))
-  }
-}
-
-export function changePassword(userId: string, oldPassword: string, newPassword: string): boolean {
-  const users = getUsers()
-  const user = users.find(u => u.id === userId)
-
-  if (!user || !verifyPassword(oldPassword, user.passwordHash)) {
+    console.log('[AUTH] Logout successful')
+    return true
+  } catch (error) {
+    console.error('[AUTH] Logout error:', error)
+    // Still clear local session
+    localStorage.removeItem('niatala_session')
     return false
   }
+}
 
-  user.passwordHash = hashPassword(newPassword)
-  localStorage.setItem(USERS_KEY, JSON.stringify(users))
-  return true
+/**
+ * Get current authenticated user from backend
+ * Verifies session is still valid
+ */
+export async function getCurrentUser(): Promise<AuthSession | null> {
+  try {
+    const response = await fetch(`${API_URL}/auth/me`, {
+      method: 'GET',
+      credentials: 'include', // Include cookies
+    })
+
+    if (response.status === 401) {
+      // Session expired or invalid
+      localStorage.removeItem('niatala_session')
+      return null
+    }
+
+    if (!response.ok) {
+      console.error('[AUTH] Get current user failed:', response.status)
+      return null
+    }
+
+    const data: CurrentUserResponse = await response.json()
+
+    const session: AuthSession = {
+      userId: data.user.id,
+      username: data.user.username,
+      name: data.user.name,
+      role: data.user.role as 'SUPER_ADMIN' | 'ADMIN' | 'CASHIER',
+      tenantId: data.user.tenantId,
+      loginTime: Date.now(),
+    }
+
+    // Update localStorage cache
+    localStorage.setItem('niatala_session', JSON.stringify(session))
+
+    return session
+  } catch (error) {
+    console.error('[AUTH] Get current user error:', error)
+    return null
+  }
+}
+
+/**
+ * Get cached session from localStorage
+ * Use getCurrentUser() to verify with server
+ */
+export function getCachedSession(): AuthSession | null {
+  try {
+    const stored = localStorage.getItem('niatala_session')
+    return stored ? JSON.parse(stored) : null
+  } catch (error) {
+    console.error('[AUTH] Parse session error:', error)
+    return null
+  }
+}
+
+/**
+ * Check if user is authenticated (cached check)
+ * Does NOT verify with server - use getCurrentUser() for that
+ */
+export function isAuthenticated(): boolean {
+  return !!getCachedSession()
+}
+
+export interface User {
+  id: string
+  username: string
+  name: string
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'CASHIER'
+  status: 'ACTIVE' | 'DISABLED'
+  tenantId?: string | null
+  createdAt?: string
+}
+
+/**
+ * Get all users
+ */
+export function getUsers(): User[] {
+  try {
+    const stored = localStorage.getItem('niatala_users')
+    return stored ? JSON.parse(stored) : []
+  } catch (error) {
+    console.error('[AUTH] Parse users error:', error)
+    return []
+  }
+}
+
+/**
+ * Create a new user via backend API
+ */
+export async function createUser(
+  name: string,
+  username: string,
+  password: string,
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'CASHIER'
+): Promise<User | null> {
+  try {
+    const response = await fetch(`${API_URL}/auth/create-user`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ name, username, password, role }),
+    })
+
+    if (!response.ok) {
+      console.error('[AUTH] Create user failed:', response.status)
+      return null
+    }
+
+    const data = await response.json()
+    const newUser = data.user
+
+    // Add new user to localStorage
+    const users = getUsers()
+    const userWithStatus: User = {
+      ...newUser,
+      status: 'ACTIVE',
+    }
+    users.push(userWithStatus)
+    localStorage.setItem('niatala_users', JSON.stringify(users))
+
+    console.log('[AUTH] User created:', username)
+    return newUser
+  } catch (error) {
+    console.error('[AUTH] Create user error:', error)
+    throw error
+  }
+}
+
+/**
+ * Update user status
+ */
+export function updateUserStatus(userId: string, status: 'ACTIVE' | 'DISABLED'): boolean {
+  try {
+    const users = getUsers()
+    const userIndex = users.findIndex(u => u.id === userId)
+
+    if (userIndex !== -1) {
+      users[userIndex].status = status
+      localStorage.setItem('niatala_users', JSON.stringify(users))
+      console.log('[AUTH] User status updated:', userId, status)
+      return true
+    }
+    return false
+  } catch (error) {
+    console.error('[AUTH] Update user status error:', error)
+    return false
+  }
 }
