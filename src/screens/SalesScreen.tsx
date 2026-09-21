@@ -264,7 +264,7 @@ export function SalesScreen() {
                       <span>Client :</span>
                       <strong>{selectedSale.clientName}</strong>
                     </div>
-                    {getClientById(selectedSale.clientId)?.phone && (
+                    {selectedSale.clientId && getClientById(selectedSale.clientId)?.phone && (
                       <div className="detail-row">
                         <span>Téléphone :</span>
                         <strong>{getClientById(selectedSale.clientId)?.phone}</strong>

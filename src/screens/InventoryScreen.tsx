@@ -19,7 +19,6 @@ export function InventoryScreen() {
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
   const [adjustmentQuantity, setAdjustmentQuantity] = useState('')
   const [adjustmentMotif, setAdjustmentMotif] = useState('')
-  const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set())
 
   // Get unique categories
   const categories = ['ALL', ...new Set(products.map(p => p.category))].sort()
@@ -40,6 +39,7 @@ export function InventoryScreen() {
 
   // Check if user has permission to access inventory
   const hasInventoryPermission = (() => {
+    if (!session) return false
     if (session.role === 'ADMIN' || session.role === 'SUPER_ADMIN') return true
     // For CASHIER, check temporary access from localStorage
     try {

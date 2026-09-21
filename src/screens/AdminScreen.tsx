@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import type { AuthSession } from '../types'
-import { getUsers, createUser, updateUserStatus } from '../services/authService'
+import { createUser } from '../services/authService'
 import { getAuditLogs } from '../services/auditService'
 import { downloadCSV } from '../utils/csvExport'
 import { useSettings } from '../hooks/useSettings'
@@ -69,19 +69,6 @@ export function AdminScreen({ session }: AdminScreenProps) {
   const [createdCashierId, setCreatedCashierId] = useState<string | null>(null)
   const [visiblePasswordId, setVisiblePasswordId] = useState<string | null>(null)
 
-  // Get cashier password from localStorage
-  const getCashierPassword = (cashierId: string): string | null => {
-    try {
-      const passwordsKey = 'niatala_cashier_passwords'
-      const stored = localStorage.getItem(passwordsKey)
-      if (!stored) return null
-      const passwords = JSON.parse(stored)
-      return passwords[cashierId] || null
-    } catch (err) {
-      return null
-    }
-  }
-
   // Load cashiers from API
   const loadCashiers = async () => {
     try {
@@ -132,22 +119,16 @@ export function AdminScreen({ session }: AdminScreenProps) {
         return
       }
 
-      // Store the password to display and persist in localStorage
+      // Display password once, then clear after 30 seconds
       setCreatedCashierPassword(newCashierPassword)
       setCreatedCashierName(newCashierName)
       setCreatedCashierId(result.id)
       setVisiblePasswordId(result.id)
 
-      // Persist password in localStorage for this session
-      try {
-        const passwordsKey = 'niatala_cashier_passwords'
-        const stored = localStorage.getItem(passwordsKey)
-        const passwords = stored ? JSON.parse(stored) : {}
-        passwords[result.id] = newCashierPassword
-        localStorage.setItem(passwordsKey, JSON.stringify(passwords))
-      } catch (err) {
-        console.error('Error storing password:', err)
-      }
+      // Auto-clear password after 30 seconds for security
+      setTimeout(() => {
+        setCreatedCashierPassword(null)
+      }, 30000)
 
       setSuccess(`Caissier "${newCashierName}" créé avec succès`)
       setNewCashierName('')
@@ -863,7 +844,7 @@ export function AdminScreen({ session }: AdminScreenProps) {
                         <td>{cashier.username}</td>
                         <td>
                           {(() => {
-                            const password = getCashierPassword(cashier.id)
+                            const password = cashier.id === createdCashierId ? createdCashierPassword : null
                             if (!password) return <span style={{ color: '#9ca3af' }}>-</span>
 
                             return (

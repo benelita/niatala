@@ -3,14 +3,14 @@ import { useProducts, type StoredProduct } from '../hooks/useProducts'
 import { useCategories } from '../hooks/useCategories'
 import { useAuthContext } from '../context/AuthContext'
 import { useInventoryAuthorization } from '../hooks/useInventoryAuthorization'
-import { PRODUCT_EMOJIS, EMOJI_BANKS } from '../constants/productEmojis'
+import { EMOJI_BANKS } from '../constants/productEmojis'
 import '../styles/ProductsScreen.css'
 
 export function ProductsScreen() {
   const { session } = useAuthContext()
   const isAdmin = session?.role === 'ADMIN' || session?.role === 'SUPER_ADMIN'
   const isCashier = session?.role === 'CASHIER'
-  const { hasAccess: inventoryAccess, authorization, loading, getTimeRemaining } = useInventoryAuthorization()
+  const { hasAccess: inventoryAccess, loading, getTimeRemaining } = useInventoryAuthorization()
   const { products, addProduct, updateProduct, deleteProduct, getStockStatus } = useProducts()
   const { categories, addCategory, removeCategory } = useCategories()
 

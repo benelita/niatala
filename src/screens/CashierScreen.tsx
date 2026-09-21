@@ -152,7 +152,7 @@ export function CashierScreen() {
       clientId = newClient.id
     }
 
-    completeCheckout('credit', clientId, creditData.paidAmount)
+    completeCheckout('credit', { id: clientId }, creditData.paidAmount)
   }
 
   const handlePartialPayment = () => {

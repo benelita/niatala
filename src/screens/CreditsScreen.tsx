@@ -51,11 +51,6 @@ export function CreditsScreen() {
 
   const totalDebts = clientsWithDebtState.reduce((sum, c) => sum + c.totalDebt, 0)
 
-  const getLastSaleDate = (clientId: string): number | null => {
-    const clientSales = sales.filter(s => s.clientId === clientId)
-    if (clientSales.length === 0) return null
-    return clientSales.reduce((latest, sale) => (sale.date > latest ? sale.date : latest), 0)
-  }
 
   const getLastCreditSale = (clientId: string) => {
     const clientCreditSales = sales.filter(
@@ -312,7 +307,7 @@ export function CreditsScreen() {
                     </tr>
                   </thead>
                   <tbody>
-                    {clientPayments.map((payment, idx) => (
+                    {clientPayments.map((payment: any, idx: number) => (
                       <tr key={idx} style={{ borderBottom: '1px solid #e5e7eb' }}>
                         <td style={{ padding: '0.75rem' }}>{formatDate(payment.date)}</td>
                         <td style={{ padding: '0.75rem', textAlign: 'right', fontWeight: '600', color: '#10b981' }}>-{payment.amount.toLocaleString('fr-FR')} FCFA</td>

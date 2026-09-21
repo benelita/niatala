@@ -71,11 +71,11 @@ function App() {
   }
 
   if (currentScreen === 'admin-registration') {
-    return <AdminRegistrationScreen setCurrentScreen={setCurrentScreen} />
+    return <AdminRegistrationScreen setCurrentScreen={setCurrentScreen as any} />
   }
 
   if (!session) {
-    return <LoginScreen onLoginSuccess={handleLoginSuccess} setCurrentScreen={setCurrentScreen} />
+    return <LoginScreen onLoginSuccess={handleLoginSuccess} setCurrentScreen={setCurrentScreen as any} />
   }
 
   const renderScreen = () => {
