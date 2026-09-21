@@ -18,10 +18,13 @@ export function useClients() {
   const [clients, setClients] = useStorage<ClientWithOperations[]>('niatala_clients', [])
 
   const getTenantClients = (): ClientWithOperations[] => {
-    return clients.filter(c => c.tenantId === session?.tenantId)
+    // Use tenantId if available, otherwise use userId for backward compatibility
+    const tenantId = session?.tenantId || session?.userId
+    return clients.filter(c => (c.tenantId === tenantId) || (!c.tenantId && !session?.tenantId))
   }
 
   const addClient = (input: CreateClientInput): ClientWithOperations => {
+    const tenantId = session?.tenantId || session?.userId
     const newClient: ClientWithOperations = {
       id: input.id || `client_${Date.now()}`,
       name: input.name,
@@ -30,7 +33,7 @@ export function useClients() {
       createdAt: Date.now(),
       totalDebt: 0,
       operations: [],
-      tenantId: session?.tenantId,
+      tenantId: tenantId,
     }
 
     setClients([...clients, newClient])
@@ -74,6 +77,7 @@ export function useClients() {
     // Si le client n'existe pas et que clientInfo est fourni, créer le client
     let targetClients = clients
     if (!clientExists && clientInfo) {
+      const tenantId = session?.tenantId || session?.userId
       const newClient: ClientWithOperations = {
         id: clientId,
         name: clientInfo.name,
@@ -81,7 +85,7 @@ export function useClients() {
         createdAt: Date.now(),
         totalDebt: 0,
         operations: [],
-        tenantId: session?.tenantId,
+        tenantId: tenantId,
       }
       targetClients = [...clients, newClient]
       console.log(`Created new client: ${clientId}`)

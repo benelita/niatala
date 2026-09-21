@@ -14,14 +14,16 @@ export function useProducts() {
   const [products, setProducts] = useStorage<StoredProduct[]>('niatala_products', [])
 
   const getTenantProducts = (): StoredProduct[] => {
-    return products.filter(p => p.tenantId === session?.tenantId)
+    const tenantId = session?.tenantId || session?.userId
+    return products.filter(p => (p.tenantId === tenantId) || (!p.tenantId && !session?.tenantId))
   }
 
   const addProduct = (product: Omit<StoredProduct, 'id'>): StoredProduct => {
+    const tenantId = session?.tenantId || session?.userId
     const newProduct: StoredProduct = {
       ...product,
       id: `product_${Date.now()}`,
-      tenantId: session?.tenantId,
+      tenantId: tenantId,
     }
     setProducts([...products, newProduct])
     return newProduct

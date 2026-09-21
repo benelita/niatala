@@ -17,9 +17,10 @@ export function useSales() {
   const [sales, setSales] = useStorage<Sale[]>('niatala_sales', [])
   const [saleCounter, setSaleCounter] = useStorage('niatala_sale_counter', 1000)
 
-  // Filter sales by current tenant
+  // Filter sales by current tenant (or by userId for backward compatibility)
   const getTenantSales = (): Sale[] => {
-    return sales.filter(s => s.tenantId === session?.tenantId)
+    const tenantId = session?.tenantId || session?.userId
+    return sales.filter(s => (s.tenantId === tenantId) || (!s.tenantId && !session?.tenantId))
   }
 
   const generateSaleNumber = (): string => {
@@ -46,6 +47,7 @@ export function useSales() {
 
   const addSale = (input: CreateSaleInput): Sale => {
     const status = determineSaleStatus(input.paymentMethod, input.paidAmount, input.total)
+    const tenantId = session?.tenantId || session?.userId
 
     const newSale: Sale = {
       id: `sale_${Date.now()}`,
@@ -59,7 +61,7 @@ export function useSales() {
       remainingAmount: input.remainingAmount,
       status,
       cashierId: input.cashierId,
-      tenantId: session?.tenantId,
+      tenantId: tenantId,
     }
 
     setSales([...sales, newSale])
