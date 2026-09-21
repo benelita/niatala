@@ -283,11 +283,14 @@ export function CashierScreen() {
 
       // Ajouter une opération de crédit si montant payé < total
       if (remainingAmount > 0) {
+        console.log('📝 Credit needed: amount =', remainingAmount, 'clientId =', clientId)
+
         // Si pas de client, créer un client "sans nom" pour la vente à crédit
         let debtClientId = clientId
         let debtClientInfo = newClientInfo
 
         if (!debtClientId) {
+          console.log('⚠️ No client, creating anonymous client...')
           const anonymousClient = addClient({
             name: 'Client anonyme',
             phone: 'N/A',
@@ -296,6 +299,7 @@ export function CashierScreen() {
           debtClientInfo = { name: 'Client anonyme', phone: 'N/A' }
         }
 
+        console.log('💾 Saving debt operation:', { debtClientId, amount: remainingAmount })
         addDebtOperation(debtClientId, {
           date: Date.now(),
           type: 'PURCHASE',
