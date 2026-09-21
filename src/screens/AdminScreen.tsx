@@ -863,7 +863,7 @@ export function AdminScreen({ session }: AdminScreenProps) {
                                   }}
                                   title={visiblePasswordId === cashier.id ? 'Masquer' : 'Afficher'}
                                 >
-                                  {visiblePasswordId === cashier.id ? '👁️' : '👁️‍🗨️'}
+                                  {visiblePasswordId === cashier.id ? '👁️' : '🚫'}
                                 </button>
                               </div>
                             )
