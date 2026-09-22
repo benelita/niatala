@@ -47,7 +47,6 @@ router.post('/create', async (req, res) => {
       },
     })
   } catch (err) {
-    console.error('Error creating super admin:', err)
     res.status(500).json({ error: 'Failed to create super admin' })
   }
 })
@@ -73,7 +72,6 @@ router.put('/update-whatsapp', async (req, res) => {
       updated: updated.count,
     })
   } catch (err) {
-    console.error('Error updating super admin:', err)
     res.status(500).json({ error: 'Failed to update super admin' })
   }
 })
@@ -109,7 +107,6 @@ router.get('/all-admins', async (req, res) => {
       total: admins.length,
     })
   } catch (err) {
-    console.error('Error fetching admins:', err)
     res.status(500).json({ error: 'Failed to fetch admins' })
   }
 })
@@ -166,7 +163,6 @@ router.post('/create-admin', async (req, res) => {
       note: 'Share username and temporary password with the admin to login',
     })
   } catch (err: any) {
-    console.error('Error creating admin:', err)
     if (err.code === 'P2002') {
       return res.status(409).json({ error: 'Username already exists' })
     }
@@ -215,7 +211,6 @@ router.put('/update-admin-credentials', async (req, res) => {
       admin: updated,
     })
   } catch (err: any) {
-    console.error('Error updating admin credentials:', err)
     if (err.code === 'P2002') {
       return res.status(409).json({ error: 'Username already exists' })
     }
@@ -252,7 +247,6 @@ router.delete('/delete-admin', async (req, res) => {
       message: 'Admin deleted successfully',
     })
   } catch (err: any) {
-    console.error('Error deleting admin:', err)
     res.status(500).json({ error: 'Failed to delete admin' })
   }
 })
@@ -291,7 +285,6 @@ router.post('/reset-admin-password', async (req, res) => {
       tempPassword: tempPassword,
     })
   } catch (err: any) {
-    console.error('Error resetting admin password:', err)
     res.status(500).json({ error: 'Failed to reset password' })
   }
 })

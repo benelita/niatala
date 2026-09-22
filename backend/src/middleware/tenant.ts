@@ -76,7 +76,6 @@ export function tenantValidationMiddleware(
     )
     next()
   } catch (error) {
-    console.error('[TENANT MIDDLEWARE] Error:', error)
     res.status(500).json({ error: 'Tenant validation failed' })
   }
 }
@@ -96,7 +95,6 @@ export function requireTenantWrite(
   }
 
   if (req.tenant.readonly) {
-    console.log(`[TENANT] Write denied: User is in read-only mode for tenant ${req.tenant.id}`)
     res.status(403).json({
       error: 'Cannot modify data for other tenants',
     })

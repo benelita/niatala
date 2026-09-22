@@ -70,12 +70,7 @@ router.post('/register', async (req, res) => {
 
     // Send authentication code (via WhatsApp or console in demo mode)
     console.log(`\n🔐 ADMIN REGISTRATION CODE (DEMO MODE)`)
-    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`)
-    console.log(`Admin: ${firstName} ${lastName}`)
-    console.log(`WhatsApp: ${whatsapp}`)
-    console.log(`Code: ${authCode}`)
     console.log(`Expires: ${codeExpiresAt.toLocaleString()}`)
-    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`)
 
     if (TWILIO_WHATSAPP_NUMBER && process.env.TWILIO_ACCOUNT_SID) {
       // Try to send WhatsApp if configured
@@ -86,7 +81,6 @@ router.post('/register', async (req, res) => {
           body: `🔐 Code d'authentification NIATALA:\n\n${authCode}\n\nCode valide 10 minutes.\nNe partage pas ce code!`,
         })
       } catch (twilioErr) {
-        console.warn('⚠️ WhatsApp not configured, code displayed in console')
       }
     }
 
@@ -98,7 +92,6 @@ router.post('/register', async (req, res) => {
       authCode: process.env.NODE_ENV === 'development' ? authCode : undefined, // Show code only in dev mode
     })
   } catch (err) {
-    console.error('Registration error:', err)
     res.status(500).json({ error: 'Registration failed' })
   }
 })
@@ -163,7 +156,6 @@ router.post('/verify-code', async (req, res) => {
       admin: updated,
     })
   } catch (err) {
-    console.error('Verification error:', err)
     res.status(500).json({ error: 'Verification failed' })
   }
 })
@@ -191,7 +183,6 @@ router.get('/status/:adminId', async (req, res) => {
       codeExpired: admin.resetCodeExpiresAt ? admin.resetCodeExpiresAt < new Date() : true,
     })
   } catch (err) {
-    console.error('Status check error:', err)
     res.status(500).json({ error: 'Status check failed' })
   }
 })

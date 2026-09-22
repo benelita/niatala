@@ -166,7 +166,6 @@ app.use((req: Request, res: Response): void => {
  * Global error handler
  */
 app.use((err: any, _req: Request, res: Response): void => {
-  console.error('[Error]', err)
   res.status(500).json({
     error: 'Internal server error',
     message: NODE_ENV === 'development' ? err.message : undefined,
@@ -185,21 +184,8 @@ app.listen(PORT, () => {
   `)
 
   const waveStatus = waveService.getConfigStatus()
-  console.log(`\n📊 Service Status:`)
-  console.log(`   Wave: ${waveStatus.mode} mode`)
-  console.log(`\n📝 Available Endpoints:`)
   console.log(`   POST /api/auth/login              - Login (username + password)`)
   console.log(`   POST /api/auth/logout             - Logout (revoke session)`)
-  console.log(`   GET  /api/auth/me                 - Get current user info`)
-  console.log(`   POST /api/auth/forgot-password    - Request password reset code`)
-  console.log(`   POST /api/auth/reset-password     - Reset password with code`)
-  console.log(`   PUT  /api/auth/admin-profile      - Update admin profile info`)
-  console.log(`   GET  /api/health                  - Health check`)
-  console.log(`   GET  /api/status                  - Server status`)
-  console.log(`   POST /api/payments/create         - Create payment`)
-  console.log(`   GET  /api/payments/:id/status     - Get payment status`)
   console.log(`   POST /api/payments/:id/confirm    - Confirm payment (manual)`)
-  console.log(`   POST /api/webhooks/wave           - Wave webhook`)
   console.log(`   POST /api/webhooks/test/wave      - Test webhook (dev only)`)
-  console.log(`\n`)
 })

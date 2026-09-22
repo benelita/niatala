@@ -61,7 +61,6 @@ export async function login(username: string, password: string): Promise<AuthSes
     })
 
     if (!response.ok) {
-      console.error('[AUTH] Login failed:', response.status)
       return null
     }
 
@@ -81,10 +80,8 @@ export async function login(username: string, password: string): Promise<AuthSes
     // Store in localStorage for quick access (NOT source of truth)
     localStorage.setItem('niatala_session', JSON.stringify(session))
 
-    console.log('[AUTH] Login successful:', username)
     return session
   } catch (error) {
-    console.error('[AUTH] Login error:', error)
     return null
   }
 }
@@ -104,13 +101,10 @@ export async function logout(): Promise<boolean> {
     localStorage.removeItem('niatala_session')
 
     if (!response.ok) {
-      console.warn('[AUTH] Logout api returned', response.status)
     }
 
-    console.log('[AUTH] Logout successful')
     return true
   } catch (error) {
-    console.error('[AUTH] Logout error:', error)
     // Still clear local session
     localStorage.removeItem('niatala_session')
     return false
@@ -135,7 +129,6 @@ export async function getCurrentUser(): Promise<AuthSession | null> {
     }
 
     if (!response.ok) {
-      console.error('[AUTH] Get current user failed:', response.status)
       return null
     }
 
@@ -155,7 +148,6 @@ export async function getCurrentUser(): Promise<AuthSession | null> {
 
     return session
   } catch (error) {
-    console.error('[AUTH] Get current user error:', error)
     return null
   }
 }
@@ -169,7 +161,6 @@ export function getCachedSession(): AuthSession | null {
     const stored = localStorage.getItem('niatala_session')
     return stored ? JSON.parse(stored) : null
   } catch (error) {
-    console.error('[AUTH] Parse session error:', error)
     return null
   }
 }
@@ -200,7 +191,6 @@ export function getUsers(): User[] {
     const stored = localStorage.getItem('niatala_users')
     return stored ? JSON.parse(stored) : []
   } catch (error) {
-    console.error('[AUTH] Parse users error:', error)
     return []
   }
 }
@@ -225,7 +215,6 @@ export async function createUser(
     })
 
     if (!response.ok) {
-      console.error('[AUTH] Create user failed:', response.status)
       return null
     }
 
@@ -241,10 +230,8 @@ export async function createUser(
     users.push(userWithStatus)
     localStorage.setItem('niatala_users', JSON.stringify(users))
 
-    console.log('[AUTH] User created:', username)
     return newUser
   } catch (error) {
-    console.error('[AUTH] Create user error:', error)
     throw error
   }
 }
@@ -260,12 +247,10 @@ export function updateUserStatus(userId: string, status: 'ACTIVE' | 'DISABLED'):
     if (userIndex !== -1) {
       users[userIndex].status = status
       localStorage.setItem('niatala_users', JSON.stringify(users))
-      console.log('[AUTH] User status updated:', userId, status)
       return true
     }
     return false
   } catch (error) {
-    console.error('[AUTH] Update user status error:', error)
     return false
   }
 }

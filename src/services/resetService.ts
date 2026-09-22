@@ -51,7 +51,6 @@ export function resetApplicationKeepProducts() {
     // Recharger l'application
     window.location.reload()
   } catch (e) {
-    console.error('Erreur lors du reset partiel:', e)
     alert('Erreur lors de la réinitialisation: ' + (e instanceof Error ? e.message : 'Erreur inconnue'))
   }
 }

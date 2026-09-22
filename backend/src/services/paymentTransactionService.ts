@@ -19,7 +19,6 @@ export class PaymentTransactionService {
     if (existingPaymentId) {
       const existingTransaction = paymentTransactions.get(existingPaymentId)
       if (existingTransaction && !this.isExpired(existingTransaction)) {
-        console.log(`[PaymentService] Idempotency key reused: ${request.idempotencyKey}`)
         return existingTransaction
       }
     }
@@ -45,7 +44,6 @@ export class PaymentTransactionService {
     paymentTransactions.set(id, transaction)
     idempotencyIndex.set(request.idempotencyKey, id)
 
-    console.log(`[PaymentService] Transaction created: ${id}`)
     return transaction
   }
 
@@ -97,7 +95,6 @@ export class PaymentTransactionService {
     }
 
     paymentTransactions.set(id, transaction)
-    console.log(`[PaymentService] Transaction ${id} status updated to ${status}`)
     return transaction
   }
 
@@ -115,7 +112,6 @@ export class PaymentTransactionService {
     transaction.lastRetry = Date.now()
 
     paymentTransactions.set(id, transaction)
-    console.error(`[PaymentService] Transaction ${id} error: ${error}`)
     return transaction
   }
 
@@ -146,7 +142,6 @@ export class PaymentTransactionService {
         cleared++
       }
     }
-    console.log(`[PaymentService] Cleared ${cleared} expired transactions`)
     return cleared
   }
 }

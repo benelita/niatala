@@ -39,14 +39,12 @@ export async function getVendors() {
     })
 
     if (!response.ok) {
-      console.error('[EXTERNAL VENDORS] Get vendors failed:', response.status)
       return null
     }
 
     const data = await response.json()
     return data.vendors
   } catch (error) {
-    console.error('[EXTERNAL VENDORS] Get vendors error:', error)
     return null
   }
 }
@@ -62,13 +60,11 @@ export async function getStats() {
     })
 
     if (!response.ok) {
-      console.error('[EXTERNAL VENDORS] Get stats failed:', response.status)
       return null
     }
 
     return await response.json()
   } catch (error) {
-    console.error('[EXTERNAL VENDORS] Get stats error:', error)
     return null
   }
 }
@@ -84,13 +80,11 @@ export async function getVendor(vendorId: string) {
     })
 
     if (!response.ok) {
-      console.error('[EXTERNAL VENDORS] Get vendor failed:', response.status)
       return null
     }
 
     return await response.json()
   } catch (error) {
-    console.error('[EXTERNAL VENDORS] Get vendor error:', error)
     return null
   }
 }
@@ -115,13 +109,11 @@ export async function recordSale(vendorName: string, vendorPhone: string, amount
     })
 
     if (!response.ok) {
-      console.error('[EXTERNAL VENDORS] Record sale failed:', response.status)
       return null
     }
 
     return await response.json()
   } catch (error) {
-    console.error('[EXTERNAL VENDORS] Record sale error:', error)
     return null
   }
 }
@@ -152,13 +144,11 @@ export async function recordPayment(
     })
 
     if (!response.ok) {
-      console.error('[EXTERNAL VENDORS] Record payment failed:', response.status)
       return null
     }
 
     return await response.json()
   } catch (error) {
-    console.error('[EXTERNAL VENDORS] Record payment error:', error)
     return null
   }
 }
@@ -174,14 +164,12 @@ export async function getVendorSales(vendorId: string) {
     })
 
     if (!response.ok) {
-      console.error('[EXTERNAL VENDORS] Get sales failed:', response.status)
       return null
     }
 
     const data = await response.json()
     return data.sales
   } catch (error) {
-    console.error('[EXTERNAL VENDORS] Get sales error:', error)
     return null
   }
 }
@@ -197,14 +185,12 @@ export async function getVendorPayments(vendorId: string) {
     })
 
     if (!response.ok) {
-      console.error('[EXTERNAL VENDORS] Get payments failed:', response.status)
       return null
     }
 
     const data = await response.json()
     return data.payments
   } catch (error) {
-    console.error('[EXTERNAL VENDORS] Get payments error:', error)
     return null
   }
 }

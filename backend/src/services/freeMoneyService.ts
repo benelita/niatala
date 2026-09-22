@@ -54,9 +54,6 @@ export class FreeMoneyService {
     this.apiAvailable = !!(this.config.apiKey && this.config.apiSecret && this.config.merchantId)
 
     if (!this.apiAvailable) {
-      console.warn('[FreeMoneyService] Free Money API not configured. Using SIMULATION mode.')
-      console.warn('[FreeMoneyService] NOTE: Free Money Business API is not officially available yet.')
-      console.warn('[FreeMoneyService] This service will be updated when API becomes available.')
     }
   }
 
@@ -130,8 +127,6 @@ export class FreeMoneyService {
    */
   private async makeFreeMoneyAPICall(session: WavePaymentSession): Promise<WavePaymentResponse> {
     try {
-      console.warn('[FreeMoneyService] Attempting real Free Money API call')
-      console.warn('[FreeMoneyService] NOTE: Official API endpoint not yet published')
 
       const endpoint = this.getFreeMoneyEndpoint('/payments')
       const payload = this.buildFreeMoneyPaymentPayload(session)
@@ -141,7 +136,6 @@ export class FreeMoneyService {
         headers: this.getFreeMoneyHeaders(),
       })
 
-      console.log('[FreeMoneyService] Payment session created:', response.data)
       return {
         transactionId: response.data.transactionId,
         sessionId: response.data.sessionId,
@@ -150,8 +144,6 @@ export class FreeMoneyService {
       }
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-      console.error('[FreeMoneyService] API call failed:', errorMsg)
-      console.error('[FreeMoneyService] NOTE: Free Money Business API may not be available yet')
       return {
         transactionId: '',
         sessionId: '',
@@ -227,10 +219,6 @@ export class FreeMoneyService {
     const transactionId = `FREE_SIM_${Date.now()}_${Math.random().toString(36).substring(7)}`
     const sessionId = `SESSION_${Math.random().toString(36).substring(7)}`
 
-    console.log('[FreeMoneyService] SIMULATION: Payment session created')
-    console.log(`  - Transaction ID: ${transactionId}`)
-    console.log(`  - Amount: ${session.amount} ${session.currency}`)
-    console.log(`  - Reference: ${session.reference}`)
 
     return {
       transactionId,
@@ -247,7 +235,6 @@ export class FreeMoneyService {
     status: PaymentStatus
     error?: string
   } {
-    console.log('[FreeMoneyService] SIMULATION: Getting payment status for', transactionId)
     return {
       status: PaymentStatus.PENDING,
     }
@@ -260,9 +247,6 @@ export class FreeMoneyService {
     success: boolean
     error?: string
   } {
-    console.log('[FreeMoneyService] SIMULATION: Refund created')
-    console.log(`  - Transaction ID: ${transactionId}`)
-    console.log(`  - Amount: ${amount}`)
     return { success: true }
   }
 

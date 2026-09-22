@@ -65,18 +65,15 @@ router.post('/forgot-password', async (req, res) => {
         body: `🔐 Code de réinitialisation NIATALA:\n\n${resetCode}\n\nCode valide 15 minutes.\nNe partage pas ce code!`,
       })
 
-      console.log(`✅ WhatsApp sent to ${whatsapp}, SID: ${message.sid}`)
 
       res.json({
         success: true,
         message: 'Reset code sent via WhatsApp',
       })
     } catch (twilioErr) {
-      console.error('❌ Twilio error:', twilioErr)
       res.status(500).json({ error: 'Failed to send WhatsApp message' })
     }
   } catch (err) {
-    console.error('Password reset error:', err)
     res.status(500).json({ error: 'Server error' })
   }
 })
@@ -128,7 +125,6 @@ router.post('/reset-password', async (req, res) => {
 
     res.json({ success: true, message: 'Password reset successfully' })
   } catch (err) {
-    console.error('Password reset error:', err)
     res.status(500).json({ error: 'Server error' })
   }
 })
@@ -164,7 +160,6 @@ router.put('/admin-profile', async (req, res) => {
 
     res.json({ success: true, user })
   } catch (err) {
-    console.error('Profile update error:', err)
     res.status(500).json({ error: 'Server error' })
   }
 })

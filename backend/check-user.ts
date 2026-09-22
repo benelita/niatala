@@ -8,14 +8,7 @@ async function main() {
   })
   
   if (user) {
-    console.log('✅ User admin EXISTS')
-    console.log('ID:', user.id)
-    console.log('Username:', user.username)
-    console.log('Role:', user.role)
-    console.log('Status:', user.status)
-    console.log('TenantId:', user.tenantId)
   } else {
-    console.log('❌ User admin NOT FOUND - recreating...')
     const bcryptjs = require('bcryptjs')
     const hash = await bcryptjs.hash('admin123', 10)
     
@@ -30,7 +23,6 @@ async function main() {
         status: 'ACTIVE'
       }
     })
-    console.log('✅ New user created:', newUser.id)
   }
 }
 

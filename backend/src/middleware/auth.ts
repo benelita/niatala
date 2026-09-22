@@ -28,7 +28,6 @@ export async function authMiddleware(
     const token = req.cookies?.auth_token
 
     if (!token) {
-      console.log('[AUTH MIDDLEWARE] No token found in cookies')
       res.status(401).json({ error: 'No authentication token' })
       return
     }
@@ -36,7 +35,6 @@ export async function authMiddleware(
     // Verify token signature
     const decoded = verifyToken(token)
     if (!decoded) {
-      console.log('[AUTH MIDDLEWARE] Token verification failed')
       res.status(401).json({ error: 'Invalid or expired token' })
       return
     }
@@ -45,7 +43,6 @@ export async function authMiddleware(
     const tokenHash = hashToken(token)
     const userId = await verifySession(tokenHash)
     if (!userId) {
-      console.log('[AUTH MIDDLEWARE] Session verification failed')
       res.status(401).json({ error: 'Session invalid or revoked' })
       return
     }
@@ -59,10 +56,8 @@ export async function authMiddleware(
     }
     req.tokenHash = tokenHash
 
-    console.log(`[AUTH MIDDLEWARE] User authenticated: ${decoded.username}`)
     next()
   } catch (error) {
-    console.error('[AUTH MIDDLEWARE] Error:', error)
     res.status(401).json({ error: 'Authentication failed' })
   }
 }
@@ -81,7 +76,6 @@ export function requireSuperAdmin(
   }
 
   if (req.user.role !== 'SUPER_ADMIN') {
-    console.log(`[AUTH] Access denied: ${req.user.username} is not SUPER_ADMIN`)
     res.status(403).json({ error: 'SUPER_ADMIN role required' })
     return
   }
@@ -103,7 +97,6 @@ export function requireAdmin(
   }
 
   if (req.user.role !== 'ADMIN' && req.user.role !== 'SUPER_ADMIN') {
-    console.log(`[AUTH] Access denied: ${req.user.username} is not ADMIN`)
     res.status(403).json({ error: 'ADMIN role required' })
     return
   }

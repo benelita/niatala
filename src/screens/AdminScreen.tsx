@@ -84,7 +84,6 @@ export function AdminScreen({ session }: AdminScreenProps) {
         setCashiers(data.users)
       }
     } catch (err) {
-      console.error('Error loading cashiers:', err)
     }
   }
 
@@ -318,7 +317,6 @@ export function AdminScreen({ session }: AdminScreenProps) {
         setAdministrators(data.admins)
       }
     } catch (err) {
-      console.error('Error loading administrators:', err)
       setError('Erreur lors du chargement des administrateurs')
     } finally {
       setAdminsLoading(false)

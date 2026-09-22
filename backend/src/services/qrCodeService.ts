@@ -99,7 +99,6 @@ export class QRCodeService {
     }
 
     this.merchantQRCodes.set(qrId, qrCode)
-    console.log(`[QRCodeService] Merchant QR generated: ${qrId}`)
 
     return qrCode
   }
@@ -124,13 +123,11 @@ export class QRCodeService {
 
       // Verify checksum
       if (this.generateChecksum(payload) !== checksum) {
-        console.warn('[QRCodeService] Invalid QR checksum - possible tampering')
         return null
       }
 
       const merchantQR = this.merchantQRCodes.get(payloadObj.id)
       if (!merchantQR || !merchantQR.isActive) {
-        console.warn('[QRCodeService] Merchant QR not found or inactive')
         return null
       }
 
@@ -156,7 +153,6 @@ export class QRCodeService {
 
       return clientScan
     } catch (error) {
-      console.error('[QRCodeService] Error scanning QR:', error)
       return null
     }
   }
@@ -175,26 +171,22 @@ export class QRCodeService {
   confirmQRScan(scanId: string, amount: number, confirmedBy: string): ClientQRScan | null {
     const scan = this.clientQRScans.get(scanId)
     if (!scan) {
-      console.warn('[QRCodeService] Scan not found:', scanId)
       return null
     }
 
     // Verify scan is not expired
     if (Date.now() > scan.expiresAt) {
       scan.status = 'EXPIRED'
-      console.warn('[QRCodeService] Scan expired:', scanId)
       return null
     }
 
     // Verify scan is still pending
     if (scan.status !== 'PENDING_CONFIRMATION') {
-      console.warn('[QRCodeService] Scan not pending:', scanId, scan.status)
       return null
     }
 
     // Validate amount
     if (amount <= 0) {
-      console.warn('[QRCodeService] Invalid amount:', amount)
       return null
     }
 
@@ -205,7 +197,6 @@ export class QRCodeService {
     scan.confirmedAt = Date.now()
 
     this.clientQRScans.set(scanId, scan)
-    console.log(`[QRCodeService] QR scan confirmed: ${scanId} for amount ${amount}`)
 
     return scan
   }
@@ -223,11 +214,9 @@ export class QRCodeService {
 
     if (scan.status === 'PENDING_CONFIRMATION') {
       scan.status = 'CANCELLED'
-      console.log(`[QRCodeService] QR scan cancelled: ${scanId}`)
       return true
     }
 
-    console.warn('[QRCodeService] Cannot cancel already confirmed scan:', scanId)
     return false
   }
 
@@ -247,7 +236,6 @@ export class QRCodeService {
 
     qr.isActive = false
     this.merchantQRCodes.set(qrId, qr)
-    console.log(`[QRCodeService] Merchant QR deactivated: ${qrId}`)
     return true
   }
 
@@ -260,19 +248,16 @@ export class QRCodeService {
     const scan = this.clientQRScans.get(scanId)
 
     if (!scan) {
-      console.warn('[QRCodeService] Scan not found:', scanId)
       return null
     }
 
     // Must be confirmed and not expired
     if (scan.status !== 'CONFIRMED') {
-      console.warn('[QRCodeService] Scan not confirmed:', scanId, scan.status)
       return null
     }
 
     if (Date.now() > scan.expiresAt) {
       scan.status = 'EXPIRED'
-      console.warn('[QRCodeService] Scan expired:', scanId)
       return null
     }
 
@@ -330,7 +315,6 @@ export class QRCodeService {
     }
 
     if (cleaned > 0) {
-      console.log(`[QRCodeService] Cleaned up ${cleaned} expired QR scans`)
     }
 
     return cleaned

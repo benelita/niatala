@@ -33,7 +33,6 @@ export class WaveBusinessService {
     }
 
     if (!this.config.apiKey || !this.config.merchantId) {
-      console.warn('[WaveService] Wave credentials not configured. Using simulation mode.')
     }
   }
 
@@ -123,11 +122,9 @@ export class WaveBusinessService {
         },
       })
 
-      console.log('[WaveService] Payment session created:', response.data)
       return response.data
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-      console.error('[WaveService] API call failed:', errorMsg)
       return {
         transactionId: '',
         sessionId: '',
@@ -215,10 +212,6 @@ export class WaveBusinessService {
     const transactionId = `WAVE_SIM_${Date.now()}_${Math.random().toString(36).substring(7)}`
     const sessionId = `SESSION_${Math.random().toString(36).substring(7)}`
 
-    console.log('[WaveService] SIMULATION: Payment session created')
-    console.log(`  - Transaction ID: ${transactionId}`)
-    console.log(`  - Amount: ${session.amount} ${session.currency}`)
-    console.log(`  - Reference: ${session.reference}`)
 
     return {
       transactionId,
@@ -237,7 +230,6 @@ export class WaveBusinessService {
   } {
     // In simulation, we can't know the real status
     // Return PENDING to indicate waiting for confirmation
-    console.log('[WaveService] SIMULATION: Getting payment status for', transactionId)
     return {
       status: PaymentStatus.PENDING,
     }
@@ -250,9 +242,6 @@ export class WaveBusinessService {
     success: boolean
     error?: string
   } {
-    console.log('[WaveService] SIMULATION: Refund created')
-    console.log(`  - Transaction ID: ${transactionId}`)
-    console.log(`  - Amount: ${amount}`)
     return { success: true }
   }
 

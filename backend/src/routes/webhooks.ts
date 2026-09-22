@@ -25,13 +25,9 @@ router.post('/wave', async (req: Request, res: Response) => {
     const payload = req.body
     const signature = req.headers['x-wave-signature'] as string
 
-    console.log('[WebhookAPI] Wave webhook received')
-    console.log('Payload:', payload)
-    console.log('Signature:', signature)
 
     // Verify webhook signature
     if (!verifyWaveWebhookSignature(JSON.stringify(payload), signature)) {
-      console.warn('[WebhookAPI] Invalid Wave webhook signature')
       return res.status(401).json({
         error: 'Invalid signature',
       })
@@ -40,7 +36,6 @@ router.post('/wave', async (req: Request, res: Response) => {
     // Prevent duplicate webhook processing (idempotency)
     const transaction = PaymentTransactionService.getTransaction(payload.paymentId)
     if (!transaction) {
-      console.warn('[WebhookAPI] Payment not found:', payload.paymentId)
       return res.status(404).json({
         error: 'Payment not found',
       })
@@ -48,7 +43,6 @@ router.post('/wave', async (req: Request, res: Response) => {
 
     // If already processed, return success (idempotent)
     if (transaction.status !== PaymentStatus.PENDING) {
-      console.log('[WebhookAPI] Payment already processed:', transaction.status)
       return res.json({ success: true, status: transaction.status })
     }
 
@@ -56,12 +50,9 @@ router.post('/wave', async (req: Request, res: Response) => {
     let newStatus: PaymentStatus
     if (payload.event === 'payment.completed' || payload.status === 'completed') {
       newStatus = PaymentStatus.SUCCESS
-      console.log('[WebhookAPI] Payment confirmed by Wave')
     } else if (payload.event === 'payment.failed' || payload.status === 'failed') {
       newStatus = PaymentStatus.FAILED
-      console.log('[WebhookAPI] Payment failed')
     } else {
-      console.warn('[WebhookAPI] Unknown payment event:', payload.event)
       return res.status(400).json({
         error: 'Unknown payment event',
       })
@@ -75,7 +66,6 @@ router.post('/wave', async (req: Request, res: Response) => {
     )
 
     // Log successful webhook processing
-    console.log(`[WebhookAPI] Wave payment ${payload.paymentId} status: ${newStatus}`)
 
     return res.json({
       success: true,
@@ -84,7 +74,6 @@ router.post('/wave', async (req: Request, res: Response) => {
     })
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[WebhookAPI] Wave webhook error:', errorMsg)
     return res.status(500).json({ error: errorMsg })
   }
 })
@@ -110,13 +99,9 @@ router.post('/orange', async (req: Request, res: Response) => {
     const payload = req.body
     const signature = req.headers['x-orange-signature'] as string
 
-    console.log('[WebhookAPI] Orange Money webhook received')
-    console.log('Payload:', payload)
-    console.log('Signature:', signature)
 
     // Verify webhook signature
     if (!verifyOrangeWebhookSignature(JSON.stringify(payload), signature)) {
-      console.warn('[WebhookAPI] Invalid Orange Money webhook signature')
       return res.status(401).json({
         error: 'Invalid signature',
       })
@@ -125,7 +110,6 @@ router.post('/orange', async (req: Request, res: Response) => {
     // Lookup transaction by payment ID
     const transaction = PaymentTransactionService.getTransaction(payload.paymentId)
     if (!transaction) {
-      console.warn('[WebhookAPI] Payment not found:', payload.paymentId)
       return res.status(404).json({
         error: 'Payment not found',
       })
@@ -133,7 +117,6 @@ router.post('/orange', async (req: Request, res: Response) => {
 
     // If already processed, return success (idempotent)
     if (transaction.status !== PaymentStatus.PENDING) {
-      console.log('[WebhookAPI] Payment already processed:', transaction.status)
       return res.json({ success: true, status: transaction.status })
     }
 
@@ -141,12 +124,9 @@ router.post('/orange', async (req: Request, res: Response) => {
     let newStatus: PaymentStatus
     if (payload.event === 'transaction.success' || payload.status === 'success') {
       newStatus = PaymentStatus.SUCCESS
-      console.log('[WebhookAPI] Payment confirmed by Orange Money')
     } else if (payload.event === 'transaction.failed' || payload.status === 'failed') {
       newStatus = PaymentStatus.FAILED
-      console.log('[WebhookAPI] Payment failed')
     } else {
-      console.warn('[WebhookAPI] Unknown payment event:', payload.event)
       return res.status(400).json({
         error: 'Unknown payment event',
       })
@@ -159,7 +139,6 @@ router.post('/orange', async (req: Request, res: Response) => {
       payload.transactionId
     )
 
-    console.log(`[WebhookAPI] Orange Money payment ${payload.paymentId} status: ${newStatus}`)
 
     return res.json({
       success: true,
@@ -168,7 +147,6 @@ router.post('/orange', async (req: Request, res: Response) => {
     })
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[WebhookAPI] Orange webhook error:', errorMsg)
     return res.status(500).json({ error: errorMsg })
   }
 })
@@ -186,7 +164,6 @@ router.post('/free', async (_req: Request, res: Response) => {
     })
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[WebhookAPI] Free webhook error:', errorMsg)
     return res.status(500).json({ error: errorMsg })
   }
 })
@@ -223,7 +200,6 @@ router.post('/test/wave', async (req: Request, res: Response) => {
       `WAVE_TEST_${Date.now()}`
     )
 
-    console.log(`[WebhookAPI] TEST: Payment ${paymentId} status set to ${newStatus}`)
 
     return res.json({
       success: true,
@@ -233,7 +209,6 @@ router.post('/test/wave', async (req: Request, res: Response) => {
     })
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[WebhookAPI] Test webhook error:', errorMsg)
     return res.status(500).json({ error: errorMsg })
   }
 })
@@ -270,7 +245,6 @@ router.post('/test/orange', async (req: Request, res: Response) => {
       `ORANGE_TEST_${Date.now()}`
     )
 
-    console.log(`[WebhookAPI] TEST: Payment ${paymentId} status set to ${newStatus}`)
 
     return res.json({
       success: true,
@@ -280,7 +254,6 @@ router.post('/test/orange', async (req: Request, res: Response) => {
     })
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[WebhookAPI] Test webhook error:', errorMsg)
     return res.status(500).json({ error: errorMsg })
   }
 })

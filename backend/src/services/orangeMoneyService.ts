@@ -42,7 +42,6 @@ export class OrangeMoneyService {
     }
 
     if (!this.config.apiKey || !this.config.merchantId) {
-      console.warn('[OrangeMoneyService] Orange Money credentials not configured. Using simulation mode.')
     }
   }
 
@@ -165,7 +164,6 @@ export class OrangeMoneyService {
         },
       })
 
-      console.log('[OrangeMoneyService] Payment session created:', response.data)
       return {
         transactionId: response.data.transactionId,
         sessionId: response.data.sessionId,
@@ -174,7 +172,6 @@ export class OrangeMoneyService {
       }
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-      console.error('[OrangeMoneyService] API call failed:', errorMsg)
       return {
         transactionId: '',
         sessionId: '',
@@ -250,10 +247,6 @@ export class OrangeMoneyService {
     const transactionId = `ORANGE_SIM_${Date.now()}_${Math.random().toString(36).substring(7)}`
     const sessionId = `SESSION_${Math.random().toString(36).substring(7)}`
 
-    console.log('[OrangeMoneyService] SIMULATION: Payment session created')
-    console.log(`  - Transaction ID: ${transactionId}`)
-    console.log(`  - Amount: ${session.amount} ${session.currency}`)
-    console.log(`  - Reference: ${session.reference}`)
 
     return {
       transactionId,
@@ -270,7 +263,6 @@ export class OrangeMoneyService {
     status: PaymentStatus
     error?: string
   } {
-    console.log('[OrangeMoneyService] SIMULATION: Getting payment status for', transactionId)
     return {
       status: PaymentStatus.PENDING,
     }
@@ -283,9 +275,6 @@ export class OrangeMoneyService {
     success: boolean
     error?: string
   } {
-    console.log('[OrangeMoneyService] SIMULATION: Refund created')
-    console.log(`  - Transaction ID: ${transactionId}`)
-    console.log(`  - Amount: ${amount}`)
     return { success: true }
   }
 

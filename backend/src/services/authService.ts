@@ -42,19 +42,16 @@ export async function login(request: LoginRequest): Promise<LoginResponse | null
     })
 
     if (!user) {
-      console.log(`[AUTH] Login failed: user ${request.username} not found`)
       return null
     }
 
     if (user.status !== 'ACTIVE') {
-      console.log(`[AUTH] Login failed: user ${request.username} is ${user.status}`)
       return null
     }
 
     // 2. Verify password
     const passwordValid = await comparePassword(request.password, user.passwordHash)
     if (!passwordValid) {
-      console.log(`[AUTH] Login failed: invalid password for ${request.username}`)
       return null
     }
 
@@ -96,7 +93,6 @@ export async function login(request: LoginRequest): Promise<LoginResponse | null
       },
     })
 
-    console.log(`[AUTH] Login successful: ${request.username}`)
 
     return {
       user: {
@@ -109,7 +105,6 @@ export async function login(request: LoginRequest): Promise<LoginResponse | null
       token,
     }
   } catch (error) {
-    console.error('[AUTH] Login error:', error)
     return null
   }
 }
@@ -136,10 +131,8 @@ export async function logout(userId: string, tokenHash: string, reason?: string)
       },
     })
 
-    console.log(`[AUTH] Logout successful: user ${userId}`)
     return true
   } catch (error) {
-    console.error('[AUTH] Logout error:', error)
     return false
   }
 }
@@ -165,7 +158,6 @@ export async function getCurrentUser(userId: string): Promise<AuthUser | null> {
       tenantId: user.tenantId,
     }
   } catch (error) {
-    console.error('[AUTH] Get current user error:', error)
     return null
   }
 }
@@ -195,7 +187,6 @@ export async function verifySession(tokenHash: string): Promise<string | null> {
 
     return session.userId
   } catch (error) {
-    console.error('[AUTH] Verify session error:', error)
     return null
   }
 }
@@ -223,7 +214,6 @@ export async function createUser(data: {
     })
 
     if (existingUser) {
-      console.log(`[AUTH] User creation failed: username ${data.username} already exists`)
       return null
     }
 
@@ -260,14 +250,12 @@ export async function createUser(data: {
       },
     })
 
-    console.log(`[AUTH] User created: ${user.username}`)
 
     return {
       id: user.id,
       username: user.username,
     }
   } catch (error) {
-    console.error('[AUTH] Create user error:', error)
     return null
   }
 }
@@ -300,7 +288,6 @@ export async function listTenantUsers(tenantId: string): Promise<AuthUser[]> {
       tenantId: u.tenantId,
     }))
   } catch (error) {
-    console.error('[AUTH] List tenant users error:', error)
     return []
   }
 }
@@ -335,10 +322,8 @@ export async function updateUserStatus(userId: string, status: string, updatedBy
       },
     })
 
-    console.log(`[AUTH] User ${userId} status updated to ${status}`)
     return true
   } catch (error) {
-    console.error('[AUTH] Update user status error:', error)
     return false
   }
 }

@@ -30,7 +30,6 @@ export function logPaymentAction(
   }
 
   localStorage.setItem(PAYMENT_LOG_KEY, JSON.stringify(logs))
-  console.log(`[PaymentEngine] ${provider} - ${action}:`, data)
 }
 
 export function getPaymentLogs(provider?: PaymentProvider, limit = 100): PaymentLogEntry[] {

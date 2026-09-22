@@ -26,7 +26,6 @@ export async function tenantFilterMiddleware(req: AuthRequest, res: Response, ne
 
     next()
   } catch (err) {
-    console.error('Tenant filter middleware error:', err)
     next()
   }
 }

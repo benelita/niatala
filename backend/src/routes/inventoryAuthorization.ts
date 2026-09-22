@@ -39,7 +39,6 @@ router.post('/grant', authMiddleware, async (req: AuthenticatedRequest, res: Res
       message: 'Inventory access granted for 12 hours',
     })
   } catch (error) {
-    console.error('[INVENTORY AUTH ROUTE] Grant error:', error)
     res.status(500).json({ error: 'Failed to grant inventory access' })
   }
 })
@@ -73,7 +72,6 @@ router.post('/revoke', authMiddleware, async (req: AuthenticatedRequest, res: Re
       message: 'Inventory access revoked',
     })
   } catch (error) {
-    console.error('[INVENTORY AUTH ROUTE] Revoke error:', error)
     res.status(500).json({ error: 'Failed to revoke inventory access' })
   }
 })
@@ -100,7 +98,6 @@ router.get('/active', authMiddleware, async (req: AuthenticatedRequest, res: Res
       authorizations,
     })
   } catch (error) {
-    console.error('[INVENTORY AUTH ROUTE] Get active error:', error)
     res.status(500).json({ error: 'Failed to get inventory authorizations' })
   }
 })
@@ -123,7 +120,6 @@ router.get('/me', authMiddleware, async (req: AuthenticatedRequest, res: Respons
       authorization: authorization || null,
     })
   } catch (error) {
-    console.error('[INVENTORY AUTH ROUTE] Get me error:', error)
     res.status(500).json({ error: 'Failed to check inventory access' })
   }
 })

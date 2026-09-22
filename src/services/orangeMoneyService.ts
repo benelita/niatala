@@ -71,7 +71,6 @@ export function requestPayment(
   const config = getOrangeConfig()
 
   if (config.status !== 'CONNECTED') {
-    console.error('Orange Money account not connected')
     return null
   }
 

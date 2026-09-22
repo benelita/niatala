@@ -66,7 +66,6 @@ router.post('/create', async (req: Request, res: Response) => {
     })
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[PaymentsAPI] Create error:', errorMsg)
     return res.status(500).json({ error: errorMsg })
   }
 })
@@ -100,7 +99,6 @@ router.get('/:paymentId/status', async (req: Request, res: Response) => {
     })
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[PaymentsAPI] Status error:', errorMsg)
     return res.status(500).json({ error: errorMsg })
   }
 })
@@ -133,7 +131,6 @@ router.get('/sale/:saleId', async (req: Request, res: Response) => {
     })
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[PaymentsAPI] Get sale error:', errorMsg)
     return res.status(500).json({ error: errorMsg })
   }
 })
@@ -159,7 +156,6 @@ router.post('/:paymentId/confirm', async (req: Request, res: Response) => {
       })
     }
 
-    console.log(`[PaymentsAPI] Payment ${paymentId} manually confirmed`)
 
     return res.json({
       id: transaction.id,
@@ -169,7 +165,6 @@ router.post('/:paymentId/confirm', async (req: Request, res: Response) => {
     })
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[PaymentsAPI] Confirm error:', errorMsg)
     return res.status(500).json({ error: errorMsg })
   }
 })
@@ -194,7 +189,6 @@ router.post('/:paymentId/cancel', async (req: Request, res: Response) => {
       })
     }
 
-    console.log(`[PaymentsAPI] Payment ${paymentId} cancelled`)
 
     return res.json({
       id: transaction.id,
@@ -203,7 +197,6 @@ router.post('/:paymentId/cancel', async (req: Request, res: Response) => {
     })
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[PaymentsAPI] Cancel error:', errorMsg)
     return res.status(500).json({ error: errorMsg })
   }
 })
@@ -266,7 +259,6 @@ router.post('/:paymentId/refund', async (req: Request, res: Response) => {
       PaymentStatus.REFUNDED
     )
 
-    console.log(`[PaymentsAPI] Payment ${paymentId} refunded`)
 
     return res.json({
       id: updatedTransaction?.id,
@@ -276,7 +268,6 @@ router.post('/:paymentId/refund', async (req: Request, res: Response) => {
     })
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[PaymentsAPI] Refund error:', errorMsg)
     return res.status(500).json({ error: errorMsg })
   }
 })

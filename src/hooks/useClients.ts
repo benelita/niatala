@@ -72,7 +72,6 @@ export function useClients() {
     }
 
     const clientExists = clients.some(c => c.id === clientId)
-    console.log(`addDebtOperation: clientId=${clientId}, clientExists=${clientExists}, totalClients=${clients.length}`)
 
     // Si le client n'existe pas et que clientInfo est fourni, créer le client
     let targetClients = clients
@@ -88,7 +87,6 @@ export function useClients() {
         tenantId: tenantId,
       }
       targetClients = [...clients, newClient]
-      console.log(`Created new client: ${clientId}`)
     }
 
     const updatedClients = targetClients.map(c => {
@@ -100,7 +98,6 @@ export function useClients() {
           return sum
         }, 0)
 
-        console.log(`Updated client ${clientId}: totalDebt=${newTotalDebt}`)
         return {
           ...c,
           operations: newOperations,
@@ -123,9 +120,7 @@ export function useClients() {
   }
 
   const getClientsWithDebt = (): ClientWithOperations[] => {
-    console.log('📊 getClientsWithDebt: all clients =', clients.length, 'session?.tenantId =', session?.tenantId)
     const debtClients = getTenantClients().filter(c => c.totalDebt > 0)
-    console.log('📊 getClientsWithDebt: clients with debt =', debtClients.length, debtClients)
     return debtClients
   }
 

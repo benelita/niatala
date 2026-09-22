@@ -69,7 +69,6 @@ export function requestPayment(
   const config = getFreeConfig()
 
   if (config.status !== 'CONNECTED') {
-    console.error('Free account not connected')
     return null
   }
 

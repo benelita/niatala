@@ -31,7 +31,6 @@ router.get('/', authMiddleware, async (req: AuthenticatedRequest, res: Response)
       vendors,
     })
   } catch (error) {
-    console.error('[EXTERNAL VENDORS ROUTE] Get vendors error:', error)
     res.status(500).json({ error: 'Failed to get vendors' })
   }
 })
@@ -51,7 +50,6 @@ router.get('/stats', authMiddleware, async (req: AuthenticatedRequest, res: Resp
 
     res.status(200).json(stats)
   } catch (error) {
-    console.error('[EXTERNAL VENDORS ROUTE] Get stats error:', error)
     res.status(500).json({ error: 'Failed to get statistics' })
   }
 })
@@ -85,7 +83,6 @@ router.post('/sales', authMiddleware, async (req: AuthenticatedRequest, res: Res
       message: 'Sale recorded successfully',
     })
   } catch (error) {
-    console.error('[EXTERNAL VENDORS ROUTE] Record sale error:', error)
     res.status(500).json({ error: 'Failed to record sale' })
   }
 })
@@ -123,7 +120,6 @@ router.post('/:vendorId/payments', authMiddleware, async (req: AuthenticatedRequ
       message: 'Payment recorded successfully',
     })
   } catch (error) {
-    console.error('[EXTERNAL VENDORS ROUTE] Record payment error:', error)
     res.status(500).json({ error: 'Failed to record payment' })
   }
 })
@@ -145,7 +141,6 @@ router.get('/:vendorId/sales', authMiddleware, async (req: AuthenticatedRequest,
       sales,
     })
   } catch (error) {
-    console.error('[EXTERNAL VENDORS ROUTE] Get sales error:', error)
     res.status(500).json({ error: 'Failed to get sales' })
   }
 })
@@ -167,7 +162,6 @@ router.get('/:vendorId/payments', authMiddleware, async (req: AuthenticatedReque
       payments,
     })
   } catch (error) {
-    console.error('[EXTERNAL VENDORS ROUTE] Get payments error:', error)
     res.status(500).json({ error: 'Failed to get payments' })
   }
 })

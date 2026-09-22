@@ -24,13 +24,11 @@ export async function checkInventoryAccess(): Promise<InventoryAuthorization | n
     })
 
     if (!response.ok) {
-      console.error('[INVENTORY AUTH] Check failed:', response.status)
       return null
     }
 
     return await response.json()
   } catch (error) {
-    console.error('[INVENTORY AUTH] Check error:', error)
     return null
   }
 }
@@ -46,14 +44,12 @@ export async function getActiveAuthorizations() {
     })
 
     if (!response.ok) {
-      console.error('[INVENTORY AUTH] Get active failed:', response.status)
       return null
     }
 
     const data = await response.json()
     return data.authorizations
   } catch (error) {
-    console.error('[INVENTORY AUTH] Get active error:', error)
     return null
   }
 }
@@ -73,13 +69,11 @@ export async function grantInventoryAccess(userId: string) {
     })
 
     if (!response.ok) {
-      console.error('[INVENTORY AUTH] Grant failed:', response.status)
       return null
     }
 
     return await response.json()
   } catch (error) {
-    console.error('[INVENTORY AUTH] Grant error:', error)
     return null
   }
 }
@@ -99,13 +93,11 @@ export async function revokeInventoryAccess(userId: string) {
     })
 
     if (!response.ok) {
-      console.error('[INVENTORY AUTH] Revoke failed:', response.status)
       return null
     }
 
     return await response.json()
   } catch (error) {
-    console.error('[INVENTORY AUTH] Revoke error:', error)
     return null
   }
 }

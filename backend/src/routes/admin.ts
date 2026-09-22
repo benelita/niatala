@@ -66,7 +66,6 @@ router.get('/users', authMiddleware, requireAdminOrSuper, async (req: Authentica
 
     res.json({ users })
   } catch (error) {
-    console.error('[ADMIN] List users error:', error)
     res.status(500).json({ error: 'Failed to list users' })
   }
 })
@@ -126,7 +125,6 @@ router.post('/users', authMiddleware, requireAdminOrSuper, async (req: Authentic
       user: result,
     })
   } catch (error) {
-    console.error('[ADMIN] Create user error:', error)
     res.status(500).json({ error: 'Failed to create user' })
   }
 })
@@ -196,7 +194,6 @@ router.patch('/users/:id', authMiddleware, requireAdminOrSuper, async (req: Auth
       },
     })
   } catch (error) {
-    console.error('[ADMIN] Update user error:', error)
     res.status(500).json({ error: 'Failed to update user' })
   }
 })
@@ -220,7 +217,6 @@ router.get('/tenants', authMiddleware, requireSuper, async (req: AuthenticatedRe
 
     res.json({ tenants })
   } catch (error) {
-    console.error('[ADMIN] List tenants error:', error)
     res.status(500).json({ error: 'Failed to list tenants' })
   }
 })
@@ -268,7 +264,6 @@ router.patch('/tenants/:id', authMiddleware, requireSuper, async (req: Authentic
       },
     })
   } catch (error) {
-    console.error('[ADMIN] Update tenant error:', error)
     res.status(500).json({ error: 'Failed to update tenant' })
   }
 })
@@ -303,7 +298,6 @@ router.get('/audit', authMiddleware, requireSuper, async (req: AuthenticatedRequ
 
     res.json({ logs })
   } catch (error) {
-    console.error('[ADMIN] List audit error:', error)
     res.status(500).json({ error: 'Failed to list audit logs' })
   }
 })

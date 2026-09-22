@@ -9,7 +9,7 @@ interface PaymentData {
 }
 
 export function CreditsScreen() {
-  const { clients, addDebtOperation, getClientsWithDebt } = useClients()
+  const { clients, addDebtOperation, getClientsWithDebt: fetchClientsWithDebt } = useClients()
   const { sales } = useSales()
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -20,25 +20,26 @@ export function CreditsScreen() {
   const [clientsWithDebtState, setClientsWithDebtState] = useState<any[]>([])
 
   useEffect(() => {
-    // Get all credit/partial credit sales directly
+    // Combine clients with explicit debt + credit sales
+    const clientsWithDebt = fetchClientsWithDebt()
+
+    // Also add clients from credit/partial credit sales
     const creditSales = sales.filter(s => s.status === 'CREDIT' || s.status === 'PARTIAL_CREDIT')
 
-    // Create display records from credit sales
-    const creditClients = creditSales.map(sale => {
-      const client = clients.find(c => c.id === sale.clientId)
-      return {
-        id: sale.id,
-        saleId: sale.id,
-        name: client?.name || 'Client sans nom',
-        phone: client?.phone || 'N/A',
-        totalDebt: sale.remainingAmount,
-        createdAt: sale.date,
-        operations: [],
-        tenantId: sale.tenantId,
-      }
-    })
+    const allClients = [...clientsWithDebt]
 
-    setClientsWithDebtState(creditClients)
+    // Add credit sale clients that don't have explicit debt records
+    for (const sale of creditSales) {
+      const client = clients.find(c => c.id === sale.clientId)
+      if (client && !allClients.find(c => c.id === client.id)) {
+        allClients.push({
+          ...client,
+          totalDebt: sale.remainingAmount,
+        })
+      }
+    }
+
+    setClientsWithDebtState(allClients)
   }, [refreshKey, clients, sales])
 
   const handleInlinePayment = (clientId: string) => {

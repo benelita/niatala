@@ -45,13 +45,11 @@ async function getLocalStorageBackup(): Promise<LegacyUser[]> {
   const backupPath = path.join(__dirname, 'users-backup.json')
 
   if (fs.existsSync(backupPath)) {
-    console.log('📂 Loading users from backup file...')
     const data = fs.readFileSync(backupPath, 'utf-8')
     return JSON.parse(data)
   }
 
   // Return default admin user for testing
-  console.log('⚠️ No backup file found, using default admin user')
   return [
     {
       id: 'admin_001',
@@ -67,22 +65,17 @@ async function getLocalStorageBackup(): Promise<LegacyUser[]> {
 
 async function migrateUsers(): Promise<void> {
   console.log('=' .repeat(60))
-  console.log('NIATALA USER MIGRATION: localStorage → PostgreSQL')
   console.log('='.repeat(60))
 
   try {
     // Step 1: Get legacy users
-    console.log('\n1️⃣  Reading legacy users...')
     const legacyUsers = await getLocalStorageBackup()
-    console.log(`   Found ${legacyUsers.length} users to migrate`)
 
     if (legacyUsers.length === 0) {
-      console.log('   ⚠️ No users to migrate, exiting')
       return
     }
 
     // Step 2: Create or get INITIAL_TENANT
-    console.log('\n2️⃣  Creating/retrieving initial tenant...')
     let tenant = await prisma.tenant.findUnique({
       where: { slug: 'initial-tenant' },
     })
@@ -98,13 +91,10 @@ async function migrateUsers(): Promise<void> {
           language: 'fr',
         },
       })
-      console.log(`   ✅ Created tenant: ${tenant.name}`)
     } else {
-      console.log(`   ✅ Using existing tenant: ${tenant.name}`)
     }
 
     // Step 3: Migrate users
-    console.log('\n3️⃣  Migrating users...')
     const migratedUsers = []
     const errors = []
 
@@ -119,7 +109,6 @@ async function migrateUsers(): Promise<void> {
         })
 
         if (existing) {
-          console.log(`   ⏭️  User ${legacyUser.username} already exists, skipping`)
           continue
         }
 
@@ -145,7 +134,6 @@ async function migrateUsers(): Promise<void> {
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)
         errors.push({ user: legacyUser.username, error: errorMsg })
-        console.log(`   ❌ Failed: ${legacyUser.username} - ${errorMsg}`)
       }
     }
 
@@ -156,35 +144,25 @@ async function migrateUsers(): Promise<void> {
         where: { id: tenant.id },
         data: { ownerId: firstAdmin.id },
       })
-      console.log(`\n4️⃣  Set tenant owner: ${firstAdmin.username}`)
     }
 
     // Step 5: Verify migration
-    console.log('\n5️⃣  Verifying migration...')
     const allUsers = await prisma.user.findMany({
       where: { tenantId: tenant.id },
     })
 
-    console.log(`   Total users in database: ${allUsers.length}`)
-    console.log(`   Successfully migrated: ${migratedUsers.length}`)
-    console.log(`   Failed: ${errors.length}`)
 
     // Verify bcrypt hashes
     const bcryptCount = allUsers.filter((u) => isBcryptHash(u.passwordHash)).length
-    console.log(`   Bcrypt hashes: ${bcryptCount}/${allUsers.length}`)
 
     if (errors.length > 0) {
-      console.log('\n⚠️  Errors encountered:')
       errors.forEach(({ user, error }) => {
-        console.log(`   - ${user}: ${error}`)
       })
     }
 
     console.log('\n' + '='.repeat(60))
-    console.log('✅ MIGRATION COMPLETE')
     console.log('='.repeat(60))
   } catch (error) {
-    console.error('\n❌ MIGRATION FAILED:', error)
     process.exit(1)
   } finally {
     await prisma.$disconnect()

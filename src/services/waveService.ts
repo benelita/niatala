@@ -71,7 +71,6 @@ export function requestPayment(
   const config = getWaveConfig()
 
   if (config.status !== 'CONNECTED') {
-    console.error('Wave account not connected')
     return null
   }
 

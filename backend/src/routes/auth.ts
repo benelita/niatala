@@ -43,7 +43,6 @@ router.post('/login', async (req, res) => {
       message: 'Login successful',
     })
   } catch (error) {
-    console.error('[AUTH ROUTE] Login error:', error)
     res.status(500).json({
       error: 'Login failed',
     })
@@ -79,7 +78,6 @@ router.post('/logout', authMiddleware, async (req: AuthenticatedRequest, res: Re
       message: 'Logout successful',
     })
   } catch (error) {
-    console.error('[AUTH ROUTE] Logout error:', error)
     res.status(500).json({
       error: 'Logout failed',
     })
@@ -112,7 +110,6 @@ router.get('/me', authMiddleware, async (req: AuthenticatedRequest, res: Respons
       user,
     })
   } catch (error) {
-    console.error('[AUTH ROUTE] Get current user error:', error)
     res.status(500).json({
       error: 'Failed to get user info',
     })
@@ -141,7 +138,6 @@ router.put('/profile', authMiddleware, async (req: AuthenticatedRequest, res: Re
       message: 'Profile update feature coming soon',
     })
   } catch (error) {
-    console.error('[AUTH ROUTE] Profile update error:', error)
     res.status(500).json({
       error: 'Failed to update profile',
     })
@@ -154,7 +150,6 @@ router.put('/profile', authMiddleware, async (req: AuthenticatedRequest, res: Re
  */
 router.post('/create-user', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    console.log('[AUTH ROUTE] Create user request:', { name: req.body?.name, username: req.body?.username, user: req.user?.username })
 
     if (!req.user) {
       res.status(401).json({
@@ -167,7 +162,6 @@ router.post('/create-user', authMiddleware, async (req: AuthenticatedRequest, re
     const trimmedUsername = username?.trim()
 
     if (!name || !trimmedUsername || !password || !role) {
-      console.log('[AUTH ROUTE] Missing fields:', { name: !!name, username: !!username, password: !!password, role: !!role })
       res.status(400).json({
         error: 'Missing required fields',
       })
@@ -176,7 +170,6 @@ router.post('/create-user', authMiddleware, async (req: AuthenticatedRequest, re
 
     // Only ADMIN and SUPER_ADMIN can create users
     if (req.user.role !== 'ADMIN' && req.user.role !== 'SUPER_ADMIN') {
-      console.log('[AUTH ROUTE] Not admin, role:', req.user.role)
       res.status(403).json({
         error: 'Only admins can create users',
       })
@@ -185,7 +178,6 @@ router.post('/create-user', authMiddleware, async (req: AuthenticatedRequest, re
 
     // Hash password
     const hashedPassword = await hashPassword(password)
-    console.log('[AUTH ROUTE] Password hashed')
 
     // Create user with admin's tenantId
     const newUser = await prisma.user.create({
@@ -206,14 +198,12 @@ router.post('/create-user', authMiddleware, async (req: AuthenticatedRequest, re
       },
     })
 
-    console.log('[AUTH ROUTE] User created successfully:', newUser.username)
     res.status(201).json({
       success: true,
       message: 'User created successfully',
       user: newUser,
     })
   } catch (err: any) {
-    console.error('[AUTH ROUTE] Create user error:', err.message, err.code)
     if (err.code === 'P2002') {
       return res.status(409).json({ error: 'Username already exists' })
     }
@@ -260,7 +250,6 @@ router.get('/users', authMiddleware, async (req: AuthenticatedRequest, res: Resp
       users,
     })
   } catch (error) {
-    console.error('[AUTH ROUTE] Get users error:', error)
     res.status(500).json({
       error: 'Failed to fetch users',
     })
@@ -341,7 +330,6 @@ router.put('/update-user-status', authMiddleware, async (req: AuthenticatedReque
       user: updated,
     })
   } catch (error) {
-    console.error('[AUTH ROUTE] Update user status error:', error)
     res.status(500).json({
       error: 'Failed to update user status',
     })
@@ -354,7 +342,6 @@ router.put('/update-user-status', authMiddleware, async (req: AuthenticatedReque
  */
 router.delete('/delete-user', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    console.log('[AUTH ROUTE] Delete user request:', { userId: req.body?.userId, user: req.user?.username })
 
     if (!req.user) {
       res.status(401).json({
@@ -364,10 +351,8 @@ router.delete('/delete-user', authMiddleware, async (req: AuthenticatedRequest, 
     }
 
     const { userId } = req.body
-    console.log('[AUTH ROUTE] Step 1: userId extracted:', userId)
 
     if (!userId) {
-      console.log('[AUTH ROUTE] Step 2: No userId, returning 400')
       res.status(400).json({
         error: 'User ID required',
       })
@@ -376,23 +361,19 @@ router.delete('/delete-user', authMiddleware, async (req: AuthenticatedRequest, 
 
     // Only ADMIN can delete users
     if (req.user.role !== 'ADMIN' && req.user.role !== 'SUPER_ADMIN') {
-      console.log('[AUTH ROUTE] Step 3: Not ADMIN, role is:', req.user.role)
       res.status(403).json({
         error: 'Only admins can delete users',
       })
       return
     }
 
-    console.log('[AUTH ROUTE] Step 4: Finding user to delete...')
     // Check that the user being deleted belongs to the same tenant
     const userToDelete = await prisma.user.findUnique({
       where: { id: userId },
       select: { tenantId: true, role: true },
     })
-    console.log('[AUTH ROUTE] Step 5: Found user:', userToDelete)
 
     if (!userToDelete) {
-      console.log('[AUTH ROUTE] Step 6: User not found, returning 404')
       res.status(404).json({
         error: 'User not found',
       })
@@ -401,7 +382,6 @@ router.delete('/delete-user', authMiddleware, async (req: AuthenticatedRequest, 
 
     // Verify tenant isolation - ADMIN can only delete users in their tenant
     if (req.user.role === 'ADMIN' && userToDelete.tenantId !== req.user.tenantId) {
-      console.log('[AUTH ROUTE] Step 7: Tenant mismatch')
       res.status(403).json({
         error: 'Cannot delete users from other tenants',
       })
@@ -410,26 +390,22 @@ router.delete('/delete-user', authMiddleware, async (req: AuthenticatedRequest, 
 
     // Don't allow deleting ADMIN or SUPER_ADMIN
     if (userToDelete.role === 'ADMIN' || userToDelete.role === 'SUPER_ADMIN') {
-      console.log('[AUTH ROUTE] Step 8: Cannot delete admin/super admin')
       res.status(403).json({
         error: 'Cannot delete admin or super admin users',
       })
       return
     }
 
-    console.log('[AUTH ROUTE] Step 9: Deleting user...')
     // Delete the user
     await prisma.user.delete({
       where: { id: userId },
     })
-    console.log('[AUTH ROUTE] Step 10: User deleted successfully')
 
     res.json({
       success: true,
       message: 'User deleted successfully',
     })
   } catch (err: any) {
-    console.error('[AUTH ROUTE] Delete user error:', err)
     res.status(500).json({
       error: 'Failed to delete user',
     })
