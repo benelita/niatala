@@ -20,26 +20,24 @@ export function CreditsScreen() {
   const [clientsWithDebtState, setClientsWithDebtState] = useState<any[]>([])
 
   useEffect(() => {
-    // Combine clients with explicit debt + credit sales
-    const clientsWithDebt = fetchClientsWithDebt()
-
-    // Also add clients from credit/partial credit sales
+    // Get all credit/partial credit sales
     const creditSales = sales.filter(s => s.status === 'CREDIT' || s.status === 'PARTIAL_CREDIT')
 
-    const allClients = [...clientsWithDebt]
-
-    // Add credit sale clients that don't have explicit debt records
-    for (const sale of creditSales) {
+    // Create display entries from credit sales - one per sale, not per unique client
+    const creditClients = creditSales.map(sale => {
       const client = clients.find(c => c.id === sale.clientId)
-      if (client && !allClients.find(c => c.id === client.id)) {
-        allClients.push({
-          ...client,
-          totalDebt: sale.remainingAmount,
-        })
+      return {
+        id: sale.id, // Use sale ID so each credit appears separately
+        name: client?.name || 'Client sans nom',
+        phone: client?.phone || 'N/A',
+        totalDebt: sale.remainingAmount,
+        createdAt: sale.date,
+        operations: [],
+        tenantId: sale.tenantId,
       }
-    }
+    })
 
-    setClientsWithDebtState(allClients)
+    setClientsWithDebtState(creditClients)
   }, [refreshKey, clients, sales])
 
   const handleInlinePayment = (clientId: string) => {
