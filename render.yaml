@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: niatala-beta
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VITE_API_URL
+        value: https://niatala-api.onrender.com
