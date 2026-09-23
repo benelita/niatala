@@ -9,7 +9,7 @@ interface PaymentData {
 }
 
 export function CreditsScreen() {
-  const { clients, addDebtOperation, getClientsWithDebt: fetchClientsWithDebt } = useClients()
+  const { clients, addDebtOperation } = useClients()
   const { sales } = useSales()
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -23,17 +23,29 @@ export function CreditsScreen() {
     // Get all credit/partial credit sales
     const creditSales = sales.filter(s => s.status === 'CREDIT' || s.status === 'PARTIAL_CREDIT')
 
-    // Create display entries from credit sales - one per sale, not per unique client
-    const creditClients = creditSales.map(sale => {
-      const client = clients.find(c => c.id === sale.clientId)
+    // Group by clientId and calculate total debt per client
+    const clientDebtMap = new Map<string, { totalDebt: number; lastSaleDate: number }>()
+
+    for (const sale of creditSales) {
+      if (!clientDebtMap.has(sale.clientId!)) {
+        clientDebtMap.set(sale.clientId!, { totalDebt: 0, lastSaleDate: 0 })
+      }
+      const data = clientDebtMap.get(sale.clientId!)!
+      data.totalDebt += sale.remainingAmount
+      data.lastSaleDate = Math.max(data.lastSaleDate, sale.date)
+    }
+
+    // Create one entry per client with total debt
+    const creditClients = Array.from(clientDebtMap.entries()).map(([clientId, data]) => {
+      const client = clients.find(c => c.id === clientId)
       return {
-        id: sale.id, // Use sale ID so each credit appears separately
+        id: clientId,
         name: client?.name || 'Client sans nom',
         phone: client?.phone || 'N/A',
-        totalDebt: sale.remainingAmount,
-        createdAt: sale.date,
+        totalDebt: data.totalDebt,
+        createdAt: data.lastSaleDate,
         operations: [],
-        tenantId: sale.tenantId,
+        tenantId: client?.tenantId,
       }
     })
 
