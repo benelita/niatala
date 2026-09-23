@@ -24,7 +24,8 @@ router.post('/forgot-password', async (req, res) => {
     const { username, whatsapp } = req.body
 
     if (!username || !whatsapp) {
-      return res.status(400).json({ error: 'Username and WhatsApp number required' })
+      res.status(400).json({ error: 'Username and WhatsApp number required' })
+      return
     }
 
     // Find admin user
@@ -36,12 +37,14 @@ router.post('/forgot-password', async (req, res) => {
     })
 
     if (!user) {
-      return res.status(404).json({ error: 'Admin user not found' })
+      res.status(404).json({ error: 'Admin user not found' })
+      return
     }
 
     // Verify WhatsApp number matches
     if (user.whatsapp !== whatsapp) {
-      return res.status(403).json({ error: 'WhatsApp number does not match' })
+      res.status(403).json({ error: 'WhatsApp number does not match' })
+      return
     }
 
     // Generate reset code (valid for 15 minutes)
@@ -59,7 +62,7 @@ router.post('/forgot-password', async (req, res) => {
 
     // Send WhatsApp message via Twilio
     try {
-      const message = await twilioClient.messages.create({
+      await twilioClient.messages.create({
         from: `whatsapp:${TWILIO_WHATSAPP_NUMBER}`,
         to: `whatsapp:${whatsapp}`,
         body: `🔐 Code de réinitialisation NIATALA:\n\n${resetCode}\n\nCode valide 15 minutes.\nNe partage pas ce code!`,
@@ -84,11 +87,13 @@ router.post('/reset-password', async (req, res) => {
     const { username, resetCode, newPassword } = req.body
 
     if (!username || !resetCode || !newPassword) {
-      return res.status(400).json({ error: 'All fields required' })
+      res.status(400).json({ error: 'All fields required' })
+      return
     }
 
     if (newPassword.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' })
+      res.status(400).json({ error: 'Password must be at least 6 characters' })
+      return
     }
 
     // Find user and verify reset code
@@ -100,12 +105,14 @@ router.post('/reset-password', async (req, res) => {
     })
 
     if (!user) {
-      return res.status(404).json({ error: 'Invalid reset code or user not found' })
+      res.status(404).json({ error: 'Invalid reset code or user not found' })
+      return
     }
 
     // Check if code is expired
     if (!user.resetCodeExpiresAt || user.resetCodeExpiresAt < new Date()) {
-      return res.status(401).json({ error: 'Reset code has expired' })
+      res.status(401).json({ error: 'Reset code has expired' })
+      return
     }
 
     // Hash new password
@@ -135,7 +142,8 @@ router.put('/admin-profile', async (req, res) => {
     const { userId, firstName, lastName, whatsapp } = req.body
 
     if (!userId) {
-      return res.status(400).json({ error: 'User ID required' })
+      res.status(400).json({ error: 'User ID required' })
+      return
     }
 
     // Update user profile

@@ -3,12 +3,10 @@ import { authMiddleware, AuthenticatedRequest } from '../middleware/auth'
 import {
   createOrGetVendor,
   getVendorsForTenant,
-  getVendor,
   recordVendorSale,
   recordVendorPayment,
   getVendorSales,
   getVendorPayments,
-  getAllExternalVendorSales,
   getExternalVendorStats,
 } from '../services/externalVendorService'
 

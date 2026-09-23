@@ -1,30 +1,43 @@
 # 🚀 Déploiement Render - NIATALA BETA
 
+## Architecture
+
+```
+Frontend (React/Vite) → API (Express/Node) → PostgreSQL
+  :3000                  :3001              Managed
+```
+
 ## Configuration rapide
 
 ### 1. Connecter le repo GitHub à Render
 
 1. Va sur [render.com](https://render.com)
-2. Crée un nouveau **Web Service**
+2. Crée un nouveau **Web Service** (pas besoin de créer manuellement!)
 3. Relie ton repo `benelita/niatala` (branche `main` pour la BETA)
-4. Render détectera automatiquement `render.yaml`
+4. **Render détectera automatiquement `render.yaml`** et créera:
+   - Service Frontend (niatala-beta)
+   - Service API (niatala-api)
+   - Base de données PostgreSQL (niatala-db)
 
-### 2. Configuration Render
-- **Build Command**: `npm install && npm run build`
-- **Start Command**: `npm run start`
-- **Node Version**: 18+
-- **Environment**: `production`
+### 2. Configuration automatique via render.yaml
+✅ Tout est configuré! Le fichier `render.yaml` inclut:
+- **Frontend**: Vite preview server (port 3000)
+- **API**: Express server (port 3001)
+- **Database**: PostgreSQL gratuit (100MB)
+- **Variables d'env**: Autorisées via Render
 
-### 3. Variables d'environnement
-Ajouter dans Render Dashboard:
-```
-NODE_ENV=production
-VITE_API_URL=https://niatala-api.onrender.com
-```
+### 3. JWT Secret & clés sensibles
+⚠️ **IMPORTANT**: Avant de déployer:
+1. Va dans Render Dashboard → Chaque service
+2. Ajoute les variables sensibles:
+   - `JWT_SECRET` → Génère une clé forte
+   - `WAVE_API_KEY`, `ORANGE_API_KEY`, etc → Utilise tes vraies clés
 
 ### 4. Deploy
 - Render va déployer automatiquement quand tu pushs sur `main`
-- Pour la branche `develop`: crée un second service pointant sur `develop`
+- Les deux services (API + Frontend) se lancent
+- La DB se crée automatiquement
+- Les migrations Prisma se lancent via `npm run build`
 
 ## Branches
 
@@ -66,8 +79,23 @@ git push origin develop
 
 ## Production Checklist
 
-- ✅ `render.yaml` configuré
-- ✅ `package.json` a le script `start`
+- ✅ `render.yaml` configuré (frontend + backend + database)
+- ✅ `package.json` scripts: `build`, `start`, `migrate`
 - ✅ `.env` NOT committed
-- ✅ Backend API disponible (si utilisé)
+- ✅ Prisma migrations en place
+- ✅ JWT_SECRET défini (pas default)
+- ✅ Payment API keys configurées (Wave, Orange, Free)
 - ✅ Tests locaux passent
+
+## URLs Finales
+
+Après deploy:
+- **Frontend**: https://niatala-beta.onrender.com
+- **API**: https://niatala-api.onrender.com
+- **Database**: Managed by Render (PostgreSQL)
+
+## Support Render
+
+- Logs: Render Dashboard → Logs
+- Redeploy: Click "Deploy" button
+- Rollback: Click "Previous Deploys"

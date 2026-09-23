@@ -129,9 +129,7 @@ router.put('/profile', authMiddleware, async (req: AuthenticatedRequest, res: Re
       return
     }
 
-    const { firstName, lastName, whatsapp } = req.body
-
-    // TODO: Update user profile with new fields
+    // TODO: Update user profile with new fields (firstName, lastName, whatsapp)
     // Waiting for Prisma client to be regenerated with new schema
 
     res.status(200).json({
@@ -205,7 +203,8 @@ router.post('/create-user', authMiddleware, async (req: AuthenticatedRequest, re
     })
   } catch (err: any) {
     if (err.code === 'P2002') {
-      return res.status(409).json({ error: 'Username already exists' })
+      res.status(409).json({ error: 'Username already exists' })
+      return
     }
     res.status(500).json({
       error: 'Failed to create user',

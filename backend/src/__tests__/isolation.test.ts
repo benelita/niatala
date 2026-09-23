@@ -6,8 +6,8 @@
  */
 
 import { describe, test, expect, beforeAll, afterAll } from '@jest/globals'
-import { PrismaClient } from '@prisma/client'
-import { login, logout, createUser, listTenantUsers } from '../services/authService'
+import { PrismaClient, User } from '@prisma/client'
+import { login, listTenantUsers } from '../services/authService'
 import { hashPassword } from '../utils/crypto'
 
 const prisma = new PrismaClient()
@@ -15,11 +15,11 @@ const prisma = new PrismaClient()
 // Test data
 let tenantA: { id: string; slug: string }
 let tenantB: { id: string; slug: string }
-let superAdmin: { id: string; username: string; passwordHash: string }
-let adminA: { id: string; username: string; passwordHash: string; tenantId: string }
-let adminB: { id: string; username: string; passwordHash: string; tenantId: string }
-let cashierA: { id: string; username: string; passwordHash: string; tenantId: string }
-let cashierB: { id: string; username: string; passwordHash: string; tenantId: string }
+let superAdmin: User
+let adminA: User
+let adminB: User
+let cashierA: User
+let cashierB: User
 
 describe('PHASE 1B: Multi-Tenant Isolation', () => {
   beforeAll(async () => {
@@ -274,7 +274,6 @@ describe('PHASE 1B: Multi-Tenant Isolation', () => {
     })
 
     // Should have logs for tenant A operations
-    const userCreateLogs = logs.filter(l => l.action === 'USER_CREATE')
     expect(logs.length).toBeGreaterThan(0)
   })
 })

@@ -10,7 +10,8 @@ router.post('/create', async (req, res) => {
     const { username, password, whatsapp } = req.body
 
     if (!username || !password || !whatsapp) {
-      return res.status(400).json({ error: 'All fields required' })
+      res.status(400).json({ error: 'All fields required' })
+      return
     }
 
     // Check if super admin already exists
@@ -19,7 +20,8 @@ router.post('/create', async (req, res) => {
     })
 
     if (existingSuper) {
-      return res.status(409).json({ error: 'Super admin already exists' })
+      res.status(409).json({ error: 'Super admin already exists' })
+      return
     }
 
     // Hash password
@@ -57,7 +59,8 @@ router.put('/update-whatsapp', async (req, res) => {
     const { whatsapp } = req.body
 
     if (!whatsapp) {
-      return res.status(400).json({ error: 'WhatsApp number required' })
+      res.status(400).json({ error: 'WhatsApp number required' })
+      return
     }
 
     // Update first super admin found
@@ -77,7 +80,7 @@ router.put('/update-whatsapp', async (req, res) => {
 })
 
 // GET /api/super-admin/all-admins - Get all admins (super admin only)
-router.get('/all-admins', async (req, res) => {
+router.get('/all-admins', async (_req, res) => {
   try {
     const admins = await prisma.user.findMany({
       where: {
@@ -117,7 +120,8 @@ router.post('/create-admin', async (req, res) => {
     const { firstName, lastName, whatsapp, username, businessName } = req.body
 
     if (!firstName || !lastName || !whatsapp || !username) {
-      return res.status(400).json({ error: 'firstName, lastName, whatsapp, username required' })
+      res.status(400).json({ error: 'firstName, lastName, whatsapp, username required' })
+      return
     }
 
     // Create tenant for this admin
@@ -164,7 +168,8 @@ router.post('/create-admin', async (req, res) => {
     })
   } catch (err: any) {
     if (err.code === 'P2002') {
-      return res.status(409).json({ error: 'Username already exists' })
+      res.status(409).json({ error: 'Username already exists' })
+      return
     }
     res.status(500).json({ error: 'Failed to create admin' })
   }
@@ -176,7 +181,8 @@ router.put('/update-admin-credentials', async (req, res) => {
     const { adminId, username, password } = req.body
 
     if (!adminId || !username) {
-      return res.status(400).json({ error: 'Admin ID and username required' })
+      res.status(400).json({ error: 'Admin ID and username required' })
+      return
     }
 
     // Prepare update data
@@ -187,9 +193,10 @@ router.put('/update-admin-credentials', async (req, res) => {
     // If password provided, hash it
     if (password) {
       if (password.length < 6) {
-        return res.status(400).json({ error: 'Password must be at least 6 characters' })
+        res.status(400).json({ error: 'Password must be at least 6 characters' })
+        return
       }
-      updateData.passwordHash = await bcrypt.hash(password, 10)
+      updateData.passwordHash = await hashPassword(password)
       updateData.passwordChangedAt = new Date()
     }
 
@@ -212,7 +219,8 @@ router.put('/update-admin-credentials', async (req, res) => {
     })
   } catch (err: any) {
     if (err.code === 'P2002') {
-      return res.status(409).json({ error: 'Username already exists' })
+      res.status(409).json({ error: 'Username already exists' })
+      return
     }
     res.status(500).json({ error: 'Failed to update admin credentials' })
   }
@@ -224,7 +232,8 @@ router.delete('/delete-admin', async (req, res) => {
     const { adminId } = req.body
 
     if (!adminId) {
-      return res.status(400).json({ error: 'Admin ID required' })
+      res.status(400).json({ error: 'Admin ID required' })
+      return
     }
 
     // Don't allow deleting SUPER_ADMIN
@@ -234,7 +243,8 @@ router.delete('/delete-admin', async (req, res) => {
     })
 
     if (admin?.role === 'SUPER_ADMIN') {
-      return res.status(403).json({ error: 'Cannot delete SUPER_ADMIN' })
+      res.status(403).json({ error: 'Cannot delete SUPER_ADMIN' })
+      return
     }
 
     // Delete the admin (and cascade delete their tenant and related data)
@@ -257,7 +267,8 @@ router.post('/reset-admin-password', async (req, res) => {
     const { adminId } = req.body
 
     if (!adminId) {
-      return res.status(400).json({ error: 'Admin ID required' })
+      res.status(400).json({ error: 'Admin ID required' })
+      return
     }
 
     // Generate temporary password

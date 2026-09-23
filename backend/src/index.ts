@@ -183,7 +183,6 @@ app.listen(PORT, () => {
 ╚════════════════════════════════════════════════╝
   `)
 
-  const waveStatus = waveService.getConfigStatus()
   console.log(`   POST /api/auth/login              - Login (username + password)`)
   console.log(`   POST /api/auth/logout             - Logout (revoke session)`)
   console.log(`   POST /api/payments/:id/confirm    - Confirm payment (manual)`)

@@ -77,22 +77,26 @@ router.get('/users', authMiddleware, requireAdminOrSuper, async (req: Authentica
 router.post('/users', authMiddleware, requireAdminOrSuper, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
-      return res.status(401).json({ error: 'Not authenticated' })
+      res.status(401).json({ error: 'Not authenticated' })
+      return
     }
 
     const { name, username, password, email, role } = req.body
 
     if (!name || !username || !password || !role) {
-      return res.status(400).json({ error: 'Missing required fields' })
+      res.status(400).json({ error: 'Missing required fields' })
+      return
     }
 
     // ADMIN can only create CASHIER in their tenant
     if (req.user.role === 'ADMIN') {
       if (role !== 'CASHIER') {
-        return res.status(403).json({ error: 'Admin can only create cashiers' })
+        res.status(403).json({ error: 'Admin can only create cashiers' })
+        return
       }
       if (!req.user.tenantId) {
-        return res.status(400).json({ error: 'Tenant not found' })
+        res.status(400).json({ error: 'Tenant not found' })
+        return
       }
     }
 
@@ -102,7 +106,8 @@ router.post('/users', authMiddleware, requireAdminOrSuper, async (req: Authentic
       if (role === 'SUPER_ADMIN' && !req.user.tenantId) {
         // This is OK for creating another SUPER_ADMIN
       } else if (role !== 'SUPER_ADMIN' && !req.body.tenantId) {
-        return res.status(400).json({ error: 'tenantId required for non-super-admin users' })
+        res.status(400).json({ error: 'tenantId required for non-super-admin users' })
+        return
       }
     }
 
@@ -117,7 +122,8 @@ router.post('/users', authMiddleware, requireAdminOrSuper, async (req: Authentic
     })
 
     if (!result) {
-      return res.status(400).json({ error: 'Failed to create user' })
+      res.status(400).json({ error: 'Failed to create user' })
+      return
     }
 
     res.status(201).json({
@@ -136,7 +142,8 @@ router.post('/users', authMiddleware, requireAdminOrSuper, async (req: Authentic
 router.patch('/users/:id', authMiddleware, requireAdminOrSuper, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
-      return res.status(401).json({ error: 'Not authenticated' })
+      res.status(401).json({ error: 'Not authenticated' })
+      return
     }
 
     const { id } = req.params
@@ -145,13 +152,15 @@ router.patch('/users/:id', authMiddleware, requireAdminOrSuper, async (req: Auth
     // Fetch the target user
     const targetUser = await prisma.user.findUnique({ where: { id } })
     if (!targetUser) {
-      return res.status(404).json({ error: 'User not found' })
+      res.status(404).json({ error: 'User not found' })
+      return
     }
 
     // ADMIN can only modify users in their tenant
     if (req.user.role === 'ADMIN') {
       if (targetUser.tenantId !== req.user.tenantId) {
-        return res.status(403).json({ error: 'Cannot modify users from other tenants' })
+        res.status(403).json({ error: 'Cannot modify users from other tenants' })
+        return
       }
     }
 
@@ -160,7 +169,8 @@ router.patch('/users/:id', authMiddleware, requireAdminOrSuper, async (req: Auth
     if (status) updates.status = status
     if (name) updates.name = name
     if (Object.keys(updates).length === 0) {
-      return res.status(400).json({ error: 'No fields to update' })
+      res.status(400).json({ error: 'No fields to update' })
+      return
     }
 
     const updated = await prisma.user.update({
@@ -202,7 +212,7 @@ router.patch('/users/:id', authMiddleware, requireAdminOrSuper, async (req: Auth
  * SUPER_ADMIN: GET /admin/tenants
  * List all tenants
  */
-router.get('/tenants', authMiddleware, requireSuper, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+router.get('/tenants', authMiddleware, requireSuper, async (_req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const tenants = await prisma.tenant.findMany({
       select: {
@@ -228,7 +238,8 @@ router.get('/tenants', authMiddleware, requireSuper, async (req: AuthenticatedRe
 router.patch('/tenants/:id', authMiddleware, requireSuper, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
-      return res.status(401).json({ error: 'Not authenticated' })
+      res.status(401).json({ error: 'Not authenticated' })
+      return
     }
 
     const { id } = req.params

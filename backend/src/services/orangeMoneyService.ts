@@ -243,7 +243,7 @@ export class OrangeMoneyService {
   /**
    * Simulate Orange Money payment session creation
    */
-  private simulateCreatePaymentSession(session: WavePaymentSession): WavePaymentResponse {
+  private simulateCreatePaymentSession(_session: WavePaymentSession): WavePaymentResponse {
     const transactionId = `ORANGE_SIM_${Date.now()}_${Math.random().toString(36).substring(7)}`
     const sessionId = `SESSION_${Math.random().toString(36).substring(7)}`
 
@@ -259,7 +259,7 @@ export class OrangeMoneyService {
   /**
    * Simulate Orange Money payment status check
    */
-  private simulateGetPaymentStatus(transactionId: string): {
+  private simulateGetPaymentStatus(_transactionId: string): {
     status: PaymentStatus
     error?: string
   } {
@@ -271,7 +271,7 @@ export class OrangeMoneyService {
   /**
    * Simulate Orange Money refund
    */
-  private simulateCreateRefund(transactionId: string, amount: number): {
+  private simulateCreateRefund(_transactionId: string, _amount: number): {
     success: boolean
     error?: string
   } {

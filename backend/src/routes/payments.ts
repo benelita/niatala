@@ -321,9 +321,10 @@ async function handleWavePayment(
         waveResponse.error.message
       )
 
-      return res.status(400).json({
+      res.status(400).json({
         error: waveResponse.error.message,
       })
+      return
     }
 
     if (waveResponse.transactionId) {
@@ -334,7 +335,7 @@ async function handleWavePayment(
       )
     }
 
-    return res.json({
+    res.json({
       id: transaction.id,
       provider: PaymentProvider.WAVE,
       status: PaymentStatus.PENDING,
@@ -349,7 +350,7 @@ async function handleWavePayment(
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
     PaymentTransactionService.recordError(transaction.id, errorMsg)
 
-    return res.status(500).json({
+    res.status(500).json({
       error: errorMsg,
     })
   }
@@ -388,9 +389,10 @@ async function handleOrangeMoneyPayment(
         orangeResponse.error.message
       )
 
-      return res.status(400).json({
+      res.status(400).json({
         error: orangeResponse.error.message,
       })
+      return
     }
 
     if (orangeResponse.transactionId) {
@@ -401,7 +403,7 @@ async function handleOrangeMoneyPayment(
       )
     }
 
-    return res.json({
+    res.json({
       id: transaction.id,
       provider: PaymentProvider.ORANGE_MONEY,
       status: PaymentStatus.PENDING,
@@ -416,7 +418,7 @@ async function handleOrangeMoneyPayment(
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
     PaymentTransactionService.recordError(transaction.id, errorMsg)
 
-    return res.status(500).json({
+    res.status(500).json({
       error: errorMsg,
     })
   }

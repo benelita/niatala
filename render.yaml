@@ -1,7 +1,28 @@
 services:
   - type: web
+    name: niatala-api
+    env: node
+    region: ohio
+    buildCommand: cd backend && npm install && npm run build && npm run migrate
+    startCommand: cd backend && npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: DATABASE_URL
+        fromDatabase:
+          name: niatala-db
+          property: connectionString
+      - key: JWT_SECRET
+        sync: false
+      - key: FRONTEND_URL
+        value: https://niatala-beta.onrender.com
+
+  - type: web
     name: niatala-beta
     env: node
+    region: ohio
     buildCommand: npm install && npm run build
     startCommand: npm run start
     envVars:
@@ -9,3 +30,10 @@ services:
         value: production
       - key: VITE_API_URL
         value: https://niatala-api.onrender.com
+
+databases:
+  - name: niatala-db
+    databaseName: niatala
+    user: niatala_user
+    region: ohio
+    plan: free

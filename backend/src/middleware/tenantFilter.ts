@@ -7,7 +7,7 @@ export interface AuthRequest extends Request {
   role?: string
 }
 
-export async function tenantFilterMiddleware(req: AuthRequest, res: Response, next: NextFunction) {
+export async function tenantFilterMiddleware(req: AuthRequest, _res: Response, next: NextFunction) {
   try {
     // Get user from session (assuming you have user info in req)
     const userId = req.body.userId || (req as any).user?.id

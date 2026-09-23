@@ -22,7 +22,8 @@ router.post('/register', async (req, res) => {
     const { firstName, lastName, whatsapp } = req.body
 
     if (!firstName || !lastName || !whatsapp) {
-      return res.status(400).json({ error: 'All fields required' })
+      res.status(400).json({ error: 'All fields required' })
+      return
     }
 
     // Check if admin already exists with this WhatsApp
@@ -34,7 +35,8 @@ router.post('/register', async (req, res) => {
     })
 
     if (existing) {
-      return res.status(409).json({ error: 'Admin already registered with this WhatsApp' })
+      res.status(409).json({ error: 'Admin already registered with this WhatsApp' })
+      return
     }
 
     // Generate auth code
@@ -102,11 +104,13 @@ router.post('/verify-code', async (req, res) => {
     const { adminId, authCode, password } = req.body
 
     if (!adminId || !authCode || !password) {
-      return res.status(400).json({ error: 'All fields required' })
+      res.status(400).json({ error: 'All fields required' })
+      return
     }
 
     if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' })
+      res.status(400).json({ error: 'Password must be at least 6 characters' })
+      return
     }
 
     // Find admin
@@ -115,17 +119,20 @@ router.post('/verify-code', async (req, res) => {
     })
 
     if (!admin) {
-      return res.status(404).json({ error: 'Admin not found' })
+      res.status(404).json({ error: 'Admin not found' })
+      return
     }
 
     // Verify code
     if (admin.resetCode !== authCode) {
-      return res.status(401).json({ error: 'Invalid code' })
+      res.status(401).json({ error: 'Invalid code' })
+      return
     }
 
     // Check code expiration
     if (!admin.resetCodeExpiresAt || admin.resetCodeExpiresAt < new Date()) {
-      return res.status(401).json({ error: 'Code expired' })
+      res.status(401).json({ error: 'Code expired' })
+      return
     }
 
     // Hash password
@@ -174,7 +181,8 @@ router.get('/status/:adminId', async (req, res) => {
     })
 
     if (!admin) {
-      return res.status(404).json({ error: 'Admin not found' })
+      res.status(404).json({ error: 'Admin not found' })
+      return
     }
 
     res.json({
